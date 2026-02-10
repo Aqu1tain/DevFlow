@@ -30,6 +30,9 @@ export default function ViewSnippetPage() {
   if (error) return <p className="text-sm text-red-400">{error}</p>;
   if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
 
+  const lineCount = snippet.code.split("\n").length;
+  const editorHeight = lineCount * 20 + 24; // lineHeight * lines + padding
+
   return (
     <div>
       <div className="mb-6">
@@ -43,13 +46,13 @@ export default function ViewSnippetPage() {
           <div className="flex gap-2 text-xs shrink-0 ml-4">
             <Link
               to={`/snippets/${id}/edit`}
-              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-md border border-white/[0.08] hover:border-white/15 transition-colors"
+              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-none border border-white/[0.08] hover:border-white/20 transition-colors font-mono"
             >
               Edit
             </Link>
             <button
               onClick={handleDelete}
-              className="text-gray-400 hover:text-red-400 px-3 py-1.5 rounded-md border border-white/[0.08] hover:border-red-500/30 transition-colors"
+              className="cursor-pointer text-gray-400 hover:text-red-400 px-3 py-1.5 rounded-none border border-white/[0.08] hover:border-red-500/30 transition-colors font-mono"
             >
               Delete
             </button>
@@ -57,13 +60,13 @@ export default function ViewSnippetPage() {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5">
             {snippet.language}
           </span>
           {snippet.tags.map((tag) => (
             <span
               key={tag}
-              className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5 rounded"
+              className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5"
             >
               {tag}
             </span>
@@ -73,7 +76,7 @@ export default function ViewSnippetPage() {
 
       <div className="rounded-lg overflow-hidden border border-white/[0.06]">
         <Editor
-          height="380px"
+          height={`${editorHeight}px`}
           language={snippet.language}
           theme="vs-dark"
           value={snippet.code}

@@ -25,9 +25,9 @@ export default function SnippetsPage() {
         <h1 className="text-lg font-mono font-medium">snippets</h1>
         <Link
           to="/snippets/new"
-          className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+          className="text-xs font-mono text-amber-400 hover:text-black hover:bg-amber-400 border border-amber-400/30 px-3 py-1.5 transition-colors"
         >
-          + New
+          + new
         </Link>
       </div>
 
@@ -36,7 +36,7 @@ export default function SnippetsPage() {
           <p className="text-gray-500 text-sm">No snippets yet</p>
           <Link
             to="/snippets/new"
-            className="text-sm text-amber-400 hover:text-amber-300 mt-2 inline-block"
+            className="text-xs font-mono text-amber-400 hover:text-amber-300 mt-2 inline-block"
           >
             Create your first snippet
           </Link>
@@ -67,7 +67,7 @@ export default function SnippetsPage() {
                   {s.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5 rounded"
+                      className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5"
                     >
                       {tag}
                     </span>
