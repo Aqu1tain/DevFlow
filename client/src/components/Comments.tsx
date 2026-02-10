@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { type MutableRefObject, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import useComments from "../hooks/useComments";
 import Button from "./Button";
+import CommentBody from "./CommentBody";
 import type { Visibility } from "../services/api";
 
 function timeAgo(date: string) {
@@ -18,13 +19,35 @@ function timeAgo(date: string) {
 interface Props {
   snippetId: string;
   visibility: Visibility;
+  code: string;
+  citeRef?: MutableRefObject<((citation: string) => void) | null>;
 }
 
-export default function Comments({ snippetId, visibility }: Props) {
+export default function Comments({ snippetId, visibility, code, citeRef }: Props) {
   const { user } = useAuth();
   const { comments, loading, addComment, deleteComment } = useComments(snippetId);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!citeRef) return;
+    citeRef.current = (citation: string) => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const { selectionStart: start, selectionEnd: end } = ta;
+      const before = body.slice(0, start);
+      const after = body.slice(end);
+      const pad = before.length > 0 && !before.endsWith(" ") ? " " : "";
+      setBody(before + pad + citation + " " + after);
+      requestAnimationFrame(() => {
+        const pos = start + pad.length + citation.length + 1;
+        ta.focus();
+        ta.setSelectionRange(pos, pos);
+      });
+    };
+    return () => { citeRef.current = null; };
+  }, [citeRef, body]);
 
   if (visibility === "private") return null;
 
@@ -52,9 +75,10 @@ export default function Comments({ snippetId, visibility }: Props) {
       {user && (
         <form onSubmit={handleSubmit} className="mb-6">
           <textarea
+            ref={textareaRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="write a comment..."
+            placeholder="write a comment... (use @L5 or @L3-7 to cite lines)"
             maxLength={2000}
             rows={3}
             className="w-full bg-white/[0.03] border border-white/[0.08] rounded-none px-3 py-2 text-sm text-gray-300 placeholder-gray-600 resize-none focus:outline-none focus:border-emerald-500/40"
@@ -86,7 +110,7 @@ export default function Comments({ snippetId, visibility }: Props) {
                 </button>
               )}
             </div>
-            <p className="text-sm text-gray-300 whitespace-pre-wrap">{comment.body}</p>
+            <CommentBody body={comment.body} code={code} />
           </div>
         ))}
       </div>

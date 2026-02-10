@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +13,7 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { snippet, loading, error } = useSnippet(id);
+  const citeRef = useRef<((citation: string) => void) | null>(null);
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
   if (error) return <p className="text-sm text-red-400">{error}</p>;
@@ -71,9 +73,9 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
-      <CodeViewer code={snippet.code} language={snippet.language} />
+      <CodeViewer code={snippet.code} language={snippet.language} onCite={(c) => citeRef.current?.(c)} />
 
-      <Comments snippetId={snippet._id} visibility={snippet.visibility} />
+      <Comments snippetId={snippet._id} visibility={snippet.visibility} code={snippet.code} citeRef={citeRef} />
     </div>
   );
 }

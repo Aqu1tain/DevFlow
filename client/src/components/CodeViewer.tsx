@@ -1,4 +1,4 @@
-import Editor from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 
 const LINE_HEIGHT = 20;
 const PADDING = 24;
@@ -23,9 +23,28 @@ export function editorHeight(code: string, minLines = 1) {
 interface Props {
   code: string;
   language: string;
+  onCite?: (citation: string) => void;
 }
 
-export default function CodeViewer({ code, language }: Props) {
+export default function CodeViewer({ code, language, onCite }: Props) {
+  const handleMount: OnMount = (editor) => {
+    if (!onCite) return;
+    editor.addAction({
+      id: "cite-in-comment",
+      label: "Cite in comment",
+      contextMenuGroupId: "navigation",
+      contextMenuOrder: 1,
+      run: (ed) => {
+        const sel = ed.getSelection();
+        if (!sel) return;
+        const startLine = sel.startLineNumber;
+        const endLine = sel.endLineNumber;
+        const citation = startLine === endLine ? `@L${startLine}` : `@L${startLine}-${endLine}`;
+        onCite(citation);
+      },
+    });
+  };
+
   return (
     <div className="rounded-lg overflow-hidden border border-white/[0.06]">
       <Editor
@@ -34,6 +53,7 @@ export default function CodeViewer({ code, language }: Props) {
         theme="vs-dark"
         value={code}
         options={{ ...baseOptions, readOnly: true }}
+        onMount={handleMount}
       />
     </div>
   );
