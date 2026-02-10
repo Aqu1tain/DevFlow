@@ -4,12 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
 import CodeViewer from "../components/CodeViewer";
 import Button, { buttonClass } from "../components/Button";
-
-const visibilityStyle = {
-  public: "text-gray-400 bg-white/[0.04]",
-  unlisted: "text-amber-400 bg-amber-500/10",
-  private: "text-rose-400 bg-rose-500/10",
-} as const;
+import { visibilityStyle } from "../lib/visibility";
 
 export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +51,7 @@ export default function ViewSnippetPage() {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className={`text-[11px] font-mono px-2 py-0.5 ${visibilityStyle[snippet.visibility]}`}>
+          <span className={`text-[11px] font-mono px-2 py-0.5 ${visibilityStyle[snippet.visibility].badge}`}>
             {snippet.visibility}
           </span>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5">
