@@ -41,7 +41,7 @@ const canUsePrivate = (req: Request) =>
 export const create = handle(async (req, res) => {
   const data = pick(req.body, [...EDITABLE_FIELDS, "visibility"]);
   if (data.visibility === "private" && !canUsePrivate(req)) {
-    return void res.status(403).json({ error: "Private snippets require a Pro account" });
+    return void res.status(402).json({ error: "Private snippets require a Pro account" });
   }
   res.status(201).json(await snippetService.create({ ...data, userId: req.userId }));
 });
@@ -55,7 +55,7 @@ export const update = handle(async (req, res) => {
   const data = pick(req.body, EDITABLE_FIELDS);
   if (req.isOwner && "visibility" in req.body) {
     if (req.body.visibility === "private" && !canUsePrivate(req)) {
-      return void res.status(403).json({ error: "Private snippets require a Pro account" });
+      return void res.status(402).json({ error: "Private snippets require a Pro account" });
     }
     data.visibility = req.body.visibility;
   }
