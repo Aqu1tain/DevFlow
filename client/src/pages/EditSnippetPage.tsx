@@ -25,17 +25,18 @@ export default function EditSnippetPage() {
     navigate(`/snippets/${id}`);
   };
 
-  if (loading) return <p className="text-gray-400">Loading...</p>;
-  if (error) return <p className="text-red-400">{error}</p>;
-  if (!snippet) return <p className="text-red-400">Snippet not found</p>;
+  if (loading)
+    return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
+  if (error) return <p className="text-sm text-red-400">{error}</p>;
+  if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Edit Snippet</h1>
+      <h1 className="text-lg font-mono font-medium mb-6">edit snippet</h1>
       <SnippetForm
         initial={snippet}
         onSubmit={handleSubmit}
-        submitLabel="Save Changes"
+        submitLabel="Save"
       />
     </div>
   );

@@ -25,63 +25,71 @@ export default function ViewSnippetPage() {
     navigate("/snippets");
   };
 
-  if (loading) return <p className="text-gray-400">Loading...</p>;
-  if (error) return <p className="text-red-400">{error}</p>;
-  if (!snippet) return <p className="text-red-400">Snippet not found</p>;
+  if (loading)
+    return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
+  if (error) return <p className="text-sm text-red-400">{error}</p>;
+  if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{snippet.title}</h1>
-        <div className="flex gap-2">
-          <Link
-            to={`/snippets/${id}/edit`}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
-          >
-            Edit
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors"
-          >
-            Delete
-          </button>
+      <div className="mb-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-lg font-mono font-medium">{snippet.title}</h1>
+            {snippet.description && (
+              <p className="text-sm text-gray-500 mt-1">{snippet.description}</p>
+            )}
+          </div>
+          <div className="flex gap-2 text-xs shrink-0 ml-4">
+            <Link
+              to={`/snippets/${id}/edit`}
+              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-md border border-white/[0.08] hover:border-white/15 transition-colors"
+            >
+              Edit
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="text-gray-400 hover:text-red-400 px-3 py-1.5 rounded-md border border-white/[0.08] hover:border-red-500/30 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <div className="flex gap-3 items-center">
-          <span className="text-sm bg-gray-700 px-2 py-1 rounded">
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
             {snippet.language}
           </span>
           {snippet.tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
+              className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5 rounded"
             >
               {tag}
             </span>
           ))}
         </div>
+      </div>
 
-        {snippet.description && (
-          <p className="text-gray-400">{snippet.description}</p>
-        )}
-
-        <div className="border border-gray-700 rounded overflow-hidden">
-          <Editor
-            height="400px"
-            language={snippet.language}
-            theme="vs-dark"
-            value={snippet.code}
-            options={{
-              readOnly: true,
-              minimap: { enabled: false },
-              fontSize: 14,
-              scrollBeyondLastLine: false,
-            }}
-          />
-        </div>
+      <div className="rounded-lg overflow-hidden border border-white/[0.06]">
+        <Editor
+          height="380px"
+          language={snippet.language}
+          theme="vs-dark"
+          value={snippet.code}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            fontSize: 13,
+            lineHeight: 20,
+            scrollBeyondLastLine: false,
+            padding: { top: 12, bottom: 12 },
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: { vertical: "hidden", horizontal: "hidden" },
+          }}
+        />
       </div>
     </div>
   );

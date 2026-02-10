@@ -12,8 +12,8 @@ export default function CreateSnippetPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">New Snippet</h1>
-      <SnippetForm onSubmit={handleSubmit} submitLabel="Create Snippet" />
+      <h1 className="text-lg font-mono font-medium mb-6">new snippet</h1>
+      <SnippetForm onSubmit={handleSubmit} submitLabel="Create" />
     </div>
   );
 }
