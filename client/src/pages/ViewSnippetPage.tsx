@@ -1,37 +1,22 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import Editor from "@monaco-editor/react";
-import { snippetsApi, type Snippet } from "../services/api";
+import { snippetsApi } from "../services/api";
+import useSnippet from "../hooks/useSnippet";
+import CodeViewer from "../components/CodeViewer";
 
 export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [snippet, setSnippet] = useState<Snippet | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { snippet, loading, error } = useSnippet(id);
 
-  useEffect(() => {
-    if (!id) return;
-    snippetsApi
-      .getById(id)
-      .then(setSnippet)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [id]);
+  if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
+  if (error) return <p className="text-sm text-red-400">{error}</p>;
+  if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
 
   const handleDelete = async () => {
     if (!id) return;
     await snippetsApi.delete(id);
     navigate("/snippets");
   };
-
-  if (loading)
-    return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
-  if (error) return <p className="text-sm text-red-400">{error}</p>;
-  if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
-
-  const lineCount = snippet.code.split("\n").length;
-  const editorHeight = lineCount * 20 + 24; // lineHeight * lines + padding
 
   return (
     <div>
@@ -64,36 +49,14 @@ export default function ViewSnippetPage() {
             {snippet.language}
           </span>
           {snippet.tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5"
-            >
+            <span key={tag} className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5">
               {tag}
             </span>
           ))}
         </div>
       </div>
 
-      <div className="rounded-lg overflow-hidden border border-white/[0.06]">
-        <Editor
-          height={`${editorHeight}px`}
-          language={snippet.language}
-          theme="vs-dark"
-          value={snippet.code}
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineHeight: 20,
-            scrollBeyondLastLine: false,
-            padding: { top: 12, bottom: 12 },
-            renderLineHighlight: "none",
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false },
-          }}
-        />
-      </div>
+      <CodeViewer code={snippet.code} language={snippet.language} />
     </div>
   );
 }

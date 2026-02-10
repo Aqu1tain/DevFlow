@@ -1,18 +1,10 @@
 import { useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput } from "../services/api";
+import { baseOptions, editorHeight } from "./CodeViewer";
 
-const LANGUAGES = [
-  "javascript",
-  "typescript",
-  "python",
-  "html",
-  "css",
-  "json",
-  "markdown",
-];
-
-const MIN_EDITOR_LINES = 12;
+const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
+const MIN_LINES = 12;
 
 interface Props {
   initial?: Partial<SnippetInput>;
@@ -20,57 +12,57 @@ interface Props {
   submitLabel: string;
 }
 
+function parseTags(input: string) {
+  return input.split(",").map((t) => t.trim()).filter(Boolean);
+}
+
 export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
-  const [tagsInput, setTagsInput] = useState(
-    initial?.tags?.join(", ") ?? ""
-  );
+  const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const scrollCursorIntoView = (editor: Parameters<OnMount>[0]) => {
     const pos = editor.getPosition();
     if (!pos || !editorRef.current) return;
     const lineTop = editorRef.current.getBoundingClientRect().top + pos.lineNumber * 20;
-    const viewportBottom = window.innerHeight - 60; // account for sticky footer
+    const viewportBottom = window.innerHeight - 60;
     if (lineTop > viewportBottom) {
       window.scrollBy({ top: lineTop - viewportBottom + 40, behavior: "smooth" });
     }
   };
 
-  const handleEditorMount: OnMount = (editor) => {
-    editor.onDidChangeModelContent(() => {
-      requestAnimationFrame(() => scrollCursorIntoView(editor));
-    });
-    editor.onDidChangeCursorPosition(() => {
-      requestAnimationFrame(() => scrollCursorIntoView(editor));
-    });
+  const handleMount: OnMount = (editor) => {
+    const scroll = () => requestAnimationFrame(() => scrollCursorIntoView(editor));
+    editor.onDidChangeModelContent(scroll);
+    editor.onDidChangeCursorPosition(scroll);
+
+    const dom = editor.getDomNode();
+    if (dom) {
+      dom.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          window.scrollBy({ top: e.deltaY });
+        }
+      }, { passive: false });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const tags = tagsInput
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    onSubmit({ title, language, description, code, tags });
+    onSubmit({ title, language, description, code, tags: parseTags(tagsInput) });
   };
 
-  const lineCount = Math.max(code.split("\n").length, MIN_EDITOR_LINES);
-  const editorHeight = lineCount * 20 + 24;
-
-  const inputClass =
-    "bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none";
+  const transparent = "bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Metadata bar */}
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.06]">
         <div className="flex items-center gap-3 px-3 py-2">
           <input
-            className={`${inputClass} flex-1 font-mono font-medium`}
+            className={`${transparent} flex-1 font-mono font-medium`}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Untitled snippet"
@@ -82,15 +74,13 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
             onChange={(e) => setLanguage(e.target.value)}
           >
             {LANGUAGES.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
+              <option key={l} value={l}>{l}</option>
             ))}
           </select>
         </div>
         <div className="px-3 py-2">
           <input
-            className={`${inputClass} w-full text-xs`}
+            className={`${transparent} w-full text-xs`}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
@@ -98,30 +88,18 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
         </div>
       </div>
 
-      {/* Code editor — the main character */}
       <div ref={editorRef} className="rounded-lg overflow-hidden border border-white/[0.06]">
         <Editor
-          height={`${editorHeight}px`}
+          height={`${editorHeight(code, MIN_LINES)}px`}
           language={language}
           theme="vs-dark"
           value={code}
           onChange={(v) => setCode(v ?? "")}
-          onMount={handleEditorMount}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineHeight: 20,
-            scrollBeyondLastLine: false,
-            padding: { top: 12, bottom: 12 },
-            renderLineHighlight: "none",
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false },
-          }}
+          onMount={handleMount}
+          options={baseOptions}
         />
       </div>
 
-      {/* Footer: tags + submit — always visible */}
       <div className="sticky bottom-0 bg-[#0a0a0f] border-t border-white/[0.06] -mx-5 px-5 py-3 flex items-center justify-between gap-4">
         <input
           className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors font-mono"

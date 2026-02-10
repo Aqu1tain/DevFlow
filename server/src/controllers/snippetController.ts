@@ -1,59 +1,40 @@
 import { Request, Response } from "express";
 import * as snippetService from "../services/snippetService";
 
-export const getAll = async (_req: Request, res: Response) => {
-  try {
-    const snippets = await snippetService.findAll();
-    res.json(snippets);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch snippets" });
-  }
-};
+type Handler = (req: Request<{ id: string }>, res: Response) => Promise<void>;
 
-export const getById = async (req: Request<{ id: string }>, res: Response) => {
-  try {
-    const snippet = await snippetService.findById(req.params.id);
-    if (!snippet) {
-      res.status(404).json({ error: "Snippet not found" });
-      return;
+const handle =
+  (fn: Handler): Handler =>
+  async (req, res) => {
+    try {
+      await fn(req, res);
+    } catch {
+      res.status(500).json({ error: "Internal server error" });
     }
-    res.json(snippet);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch snippet" });
-  }
-};
+  };
 
-export const create = async (req: Request, res: Response) => {
-  try {
-    const snippet = await snippetService.create(req.body);
-    res.status(201).json(snippet);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to create snippet" });
-  }
-};
+export const getAll = handle(async (_req, res) => {
+  res.json(await snippetService.findAll());
+});
 
-export const update = async (req: Request<{ id: string }>, res: Response) => {
-  try {
-    const snippet = await snippetService.update(req.params.id, req.body);
-    if (!snippet) {
-      res.status(404).json({ error: "Snippet not found" });
-      return;
-    }
-    res.json(snippet);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update snippet" });
-  }
-};
+export const getById = handle(async (req, res) => {
+  const snippet = await snippetService.findById(req.params.id);
+  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
+  res.json(snippet);
+});
 
-export const remove = async (req: Request<{ id: string }>, res: Response) => {
-  try {
-    const snippet = await snippetService.remove(req.params.id);
-    if (!snippet) {
-      res.status(404).json({ error: "Snippet not found" });
-      return;
-    }
-    res.json({ message: "Snippet deleted" });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to delete snippet" });
-  }
-};
+export const create = handle(async (req, res) => {
+  res.status(201).json(await snippetService.create(req.body));
+});
+
+export const update = handle(async (req, res) => {
+  const snippet = await snippetService.update(req.params.id, req.body);
+  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
+  res.json(snippet);
+});
+
+export const remove = handle(async (req, res) => {
+  const snippet = await snippetService.remove(req.params.id);
+  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
+  res.json({ message: "Snippet deleted" });
+});
