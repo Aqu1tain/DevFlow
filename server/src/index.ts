@@ -6,6 +6,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import snippetRoutes from "./routes/snippets";
 import authRoutes from "./routes/auth";
+import { socketAuth } from "./socket/auth";
 
 dotenv.config();
 
@@ -31,6 +32,8 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
+io.use(socketAuth);
 
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
