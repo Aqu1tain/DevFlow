@@ -7,6 +7,7 @@ import SnippetsPage from "./pages/SnippetsPage";
 import CreateSnippetPage from "./pages/CreateSnippetPage";
 import EditSnippetPage from "./pages/EditSnippetPage";
 import ViewSnippetPage from "./pages/ViewSnippetPage";
+import LivePage from "./pages/LivePage";
 
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/snippets/new" element={<CreateSnippetPage />} />
             <Route path="/snippets/:id" element={<ViewSnippetPage />} />
             <Route path="/snippets/:id/edit" element={<EditSnippetPage />} />
+            <Route path="/snippets/:id/live" element={<LivePage />} />
           </Route>
         </Routes>
       </AuthProvider>

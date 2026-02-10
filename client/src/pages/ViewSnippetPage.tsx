@@ -36,6 +36,9 @@ export default function ViewSnippetPage() {
             )}
           </div>
           <div className="flex gap-2 shrink-0 ml-4">
+            <Link to={`/snippets/${id}/live`} className={buttonClass("accent", "px-3 py-1.5")}>
+              Go Live
+            </Link>
             {canEdit && (
               <Link to={`/snippets/${id}/edit`} className={buttonClass("ghost", "px-3 py-1.5")}>
                 Edit
