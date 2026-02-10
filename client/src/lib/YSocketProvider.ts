@@ -9,13 +9,11 @@ import {
 export class YSocketProvider {
   doc: Y.Doc;
   awareness: Awareness;
-  private socket: Socket;
   private updateHandler: (update: Uint8Array, origin: unknown) => void;
   private awarenessHandler: (changes: { added: number[]; updated: number[]; removed: number[] }) => void;
 
   constructor(doc: Y.Doc, socket: Socket, initialState: number[]) {
     this.doc = doc;
-    this.socket = socket;
     this.awareness = new Awareness(doc);
 
     Y.applyUpdate(doc, new Uint8Array(initialState));
