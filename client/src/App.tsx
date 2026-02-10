@@ -11,7 +11,7 @@ function App() {
         <nav className="border-b border-white/5 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-5 h-14 flex items-center">
             <Link to="/snippets" className="text-base font-mono font-semibold tracking-tight">
-              dev<span className="text-amber-400">flow</span>
+              dev<span className="text-emerald-400">flow</span>
             </Link>
           </div>
         </nav>

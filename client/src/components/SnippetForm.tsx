@@ -69,7 +69,7 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
             required
           />
           <select
-            className="bg-transparent text-xs font-mono text-amber-400 focus:outline-none cursor-pointer"
+            className="bg-transparent text-xs font-mono text-emerald-400 focus:outline-none cursor-pointer"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
           >
@@ -102,14 +102,14 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
 
       <div className="sticky bottom-0 bg-[#0a0a0f] border-t border-white/[0.06] -mx-5 px-5 py-3 flex items-center justify-between gap-4">
         <input
-          className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors font-mono"
+          className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="tags: comma-separated"
         />
         <button
           type="submit"
-          className="cursor-pointer text-xs font-mono bg-amber-500 hover:bg-amber-400 text-black px-5 py-2 rounded-none transition-colors shrink-0"
+          className="cursor-pointer text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2 rounded-none transition-colors shrink-0"
         >
           {submitLabel}
         </button>

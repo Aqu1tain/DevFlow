@@ -45,7 +45,7 @@ export default function ViewSnippetPage() {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5">
+          <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5">
             {snippet.language}
           </span>
           {snippet.tags.map((tag) => (
