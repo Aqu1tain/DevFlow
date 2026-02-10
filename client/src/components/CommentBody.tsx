@@ -2,7 +2,7 @@ type Segment =
   | { type: "text"; value: string }
   | { type: "cite"; startLine: number; endLine: number; raw: string };
 
-const CITE_RE = /@L(\d+)(?:-(\d+))?/g;
+export const CITE_RE = /@L(\d+)(?:-(\d+))?/g;
 
 function parseBody(body: string): Segment[] {
   const segments: Segment[] = [];
@@ -44,10 +44,14 @@ export default function CommentBody({ body, code }: Props) {
             </code>
           );
 
+        const label = startLine === endLine ? `L${startLine}` : `L${startLine}-${endLine}`;
         const cited = lines.slice(startLine - 1, endLine);
         return (
           <span key={i} className="inline-block align-middle my-0.5">
-            <span className="block border border-white/[0.08] bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm">
+            <span className="block border border-emerald-500/20 bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/[0.07] border-b border-emerald-500/20 text-emerald-400 text-[10px]">
+                {label}
+              </span>
               {cited.map((line, j) => (
                 <span key={j} className="flex">
                   <span className="select-none text-emerald-500/60 text-right w-8 shrink-0 px-1.5 bg-white/[0.02]">

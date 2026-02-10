@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 
 const LINE_HEIGHT = 20;
@@ -24,10 +25,16 @@ interface Props {
   code: string;
   language: string;
   onCite?: (citation: string) => void;
+  citedLines?: Set<number>;
 }
 
-export default function CodeViewer({ code, language, onCite }: Props) {
+export default function CodeViewer({ code, language, onCite, citedLines }: Props) {
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const decorationsRef = useRef<string[]>([]);
+
   const handleMount: OnMount = (editor) => {
+    editorRef.current = editor;
+
     if (!onCite) return;
     editor.addAction({
       id: "cite-in-comment",
@@ -45,6 +52,22 @@ export default function CodeViewer({ code, language, onCite }: Props) {
     });
   };
 
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !citedLines) return;
+
+    const decorations = [...citedLines].map((line) => ({
+      range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
+      options: {
+        isWholeLine: true,
+        className: "cited-line-highlight",
+        glyphMarginClassName: "cited-line-glyph",
+      },
+    }));
+
+    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
+  }, [citedLines]);
+
   return (
     <div className="rounded-lg overflow-hidden border border-white/[0.06]">
       <Editor
@@ -52,7 +75,7 @@ export default function CodeViewer({ code, language, onCite }: Props) {
         language={language}
         theme="vs-dark"
         value={code}
-        options={{ ...baseOptions, readOnly: true }}
+        options={{ ...baseOptions, readOnly: true, glyphMargin: !!citedLines?.size }}
         onMount={handleMount}
       />
     </div>
