@@ -6,6 +6,8 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import snippetRoutes from "./routes/snippets";
 import authRoutes from "./routes/auth";
+import { socketAuth } from "./socket/auth";
+import { registerLiveSession } from "./socket/liveSession";
 
 dotenv.config();
 
@@ -32,10 +34,9 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-io.on("connection", (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-  socket.on("disconnect", () => console.log(`Client disconnected: ${socket.id}`));
-});
+io.use(socketAuth);
+
+registerLiveSession(io);
 
 httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 

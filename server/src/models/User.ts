@@ -84,11 +84,30 @@ userSchema.methods.isGuestExpired = function () {
   return new Date() > this.guestExpiresAt;
 };
 
+const ANIMALS = [
+  "capybara", "pangolin", "axolotl", "quokka", "narwhal", "ocelot", "fennec",
+  "wombat", "tardigrade", "chameleon", "platypus", "lemur", "otter", "mantis",
+  "gecko", "falcon", "lynx", "panda", "toucan", "bison", "cobra", "dingo",
+  "eagle", "ferret", "heron", "ibis", "jackal", "koala", "moose", "newt",
+  "osprey", "puffin", "raven", "sloth", "tapir", "urchin", "viper", "walrus",
+  "yak", "zebra", "badger", "crane", "dove", "elk", "fox", "goose", "hawk",
+  "iguana", "jay", "kiwi", "lark", "mole", "owl", "parrot", "robin", "swan",
+];
+
 userSchema.statics.createGuest = async function () {
+  const taken = new Set(
+    (await this.find({ isGuest: true, guestExpiresAt: { $gt: new Date() } }).select("username"))
+      .map((u: IUser) => u.username),
+  );
+  const available = ANIMALS.filter((a) => !taken.has(`guest_${a}`));
+  const pick = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+
   return this.create({
     userType: "guest",
     isGuest: true,
-    username: `guest_${Math.random().toString(36).slice(2, 8)}`,
+    username: `guest_${pick}`,
     guestSessionId: `guest_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     guestExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });

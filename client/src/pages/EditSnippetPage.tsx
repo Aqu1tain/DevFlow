@@ -1,7 +1,8 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi, type SnippetInput } from "../services/api";
 import useSnippet from "../hooks/useSnippet";
 import SnippetForm from "../components/SnippetForm";
+import { buttonClass } from "../components/Button";
 
 export default function EditSnippetPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +25,12 @@ export default function EditSnippetPage() {
 
   return (
     <div>
-      <h1 className="text-lg font-mono font-medium mb-6">edit snippet</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-mono font-medium">edit snippet</h1>
+        <Link to={`/snippets/${id}/live`} className={buttonClass("accent", "px-3 py-1.5")}>
+          Go Live
+        </Link>
+      </div>
       <SnippetForm initial={snippet} onSubmit={handleSubmit} onSave={save} submitLabel="Save" />
     </div>
   );
