@@ -116,7 +116,7 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
             renderLineHighlight: "none",
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,
-            scrollbar: { vertical: "hidden", horizontal: "hidden", handleMouseWheel: false },
+            scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false },
           }}
         />
       </div>
