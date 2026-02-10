@@ -10,7 +10,7 @@ export const create = (data: Partial<ISnippet>) =>
   Snippet.create(data);
 
 export const update = (id: string, data: Partial<ISnippet>) =>
-  Snippet.findByIdAndUpdate(id, data, { new: true }).exec();
+  Snippet.findByIdAndUpdate(id, data, { new: true, runValidators: true }).exec();
 
 export const remove = (id: string) =>
   Snippet.findByIdAndDelete(id).exec();

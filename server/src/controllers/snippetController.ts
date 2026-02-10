@@ -1,14 +1,23 @@
+import mongoose from "mongoose";
 import { Request, Response } from "express";
 import * as snippetService from "../services/snippetService";
 
 type Handler = (req: Request<{ id: string }>, res: Response) => Promise<void>;
+
+const isCastError = (err: unknown) =>
+  err instanceof mongoose.Error.CastError;
+
+const isValidationError = (err: unknown) =>
+  err instanceof mongoose.Error.ValidationError;
 
 const handle =
   (fn: Handler): Handler =>
   async (req, res) => {
     try {
       await fn(req, res);
-    } catch {
+    } catch (err) {
+      if (isCastError(err)) return void res.status(400).json({ error: "Invalid ID format" });
+      if (isValidationError(err)) return void res.status(400).json({ error: (err as mongoose.Error.ValidationError).message });
       res.status(500).json({ error: "Internal server error" });
     }
   };
