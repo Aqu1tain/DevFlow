@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { snippetsApi, type Snippet } from "../services/api";
 import { buttonClass } from "../components/Button";
+import { visibilityStyle } from "../lib/visibility";
 
 export default function SnippetsPage() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
@@ -54,6 +55,11 @@ export default function SnippetsPage() {
                 <span className="text-[11px] text-gray-500 font-mono">
                   {s.language}
                 </span>
+                {s.visibility !== "public" && (
+                  <span className={`text-[10px] font-mono ${visibilityStyle[s.visibility].color}`}>
+                    {s.visibility}
+                  </span>
+                )}
               </div>
               {s.description && (
                 <p className="text-xs text-gray-500 mt-1 leading-relaxed">

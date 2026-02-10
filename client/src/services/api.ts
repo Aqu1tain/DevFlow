@@ -20,6 +20,8 @@ export interface AuthResponse {
   user: User;
 }
 
+export type Visibility = "public" | "unlisted" | "private";
+
 export interface Snippet {
   _id: string;
   title: string;
@@ -27,11 +29,13 @@ export interface Snippet {
   description: string;
   code: string;
   tags: string[];
+  visibility: Visibility;
+  userId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type SnippetInput = Omit<Snippet, "_id" | "createdAt" | "updatedAt">;
+export type SnippetInput = Omit<Snippet, "_id" | "createdAt" | "updatedAt" | "userId">;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
