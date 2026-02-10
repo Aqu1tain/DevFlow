@@ -16,7 +16,8 @@
     "mongoose": "^8.9.5",
     "redis": "^4.7.0",
     "socket.io": "^4.8.1",
-    "stripe": "^17.5.0"
+    "stripe": "^17.5.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
