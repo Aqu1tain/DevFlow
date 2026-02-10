@@ -15,6 +15,7 @@ export default function LivePage() {
   const bindingRef = useRef<MonacoBinding | null>(null);
   const [editor, setEditor] = useState<Parameters<OnMount>[0] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [copied, setCopied] = useState(false);
 
   const readOnly = mode === "visible" && !isHost;
 
@@ -74,6 +75,17 @@ export default function LivePage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="ghost"
+            className="px-3 py-1.5"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+          >
+            {copied ? "Copied!" : "Copy link"}
+          </Button>
           {isHost && (
             <Button
               variant="ghost"
