@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
-import type { SnippetInput } from "../services/api";
+import type { SnippetInput, Visibility } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import Button from "./Button";
 
@@ -23,13 +23,14 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
+  const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? "public");
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
-    () => ({ title, language, description, code, tags: parseTags(tagsInput) }),
-    [title, language, description, code, tagsInput],
+    () => ({ title, language, description, code, tags: parseTags(tagsInput), visibility }),
+    [title, language, description, code, tagsInput, visibility],
   );
 
   const flashSaved = () => {
@@ -94,6 +95,15 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
             placeholder="Untitled snippet"
             required
           />
+          <select
+            className="bg-transparent text-xs font-mono text-gray-400 focus:outline-none cursor-pointer"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as Visibility)}
+          >
+            <option value="public">public</option>
+            <option value="unlisted">unlisted</option>
+            <option value="private">private</option>
+          </select>
           <select
             className="bg-transparent text-xs font-mono text-emerald-400 focus:outline-none cursor-pointer"
             value={language}

@@ -22,27 +22,32 @@ const handle =
     }
   };
 
-export const getAll = handle(async (_req, res) => {
-  res.json(await snippetService.findAll());
+export const getAll = handle(async (req, res) => {
+  res.json(await snippetService.findPublicAndOwn(req.userId));
 });
 
 export const getById = handle(async (req, res) => {
-  const snippet = await snippetService.findById(req.params.id);
-  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
-  res.json(snippet);
+  res.json(req.snippet);
 });
 
 export const create = handle(async (req, res) => {
-  res.status(201).json(await snippetService.create(req.body));
+  res.status(201).json(await snippetService.create({ ...req.body, userId: req.userId }));
 });
 
 export const update = handle(async (req, res) => {
-  const snippet = await snippetService.update(req.params.id, req.body);
-  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
-  res.json(snippet);
+  const snippet = req.snippet!;
+  if (snippet.visibility !== "public" && !req.isOwner) {
+    return void res.status(403).json({ error: "Access denied" });
+  }
+
+  const updated = await snippetService.update(req.params.id, req.body);
+  if (!updated) return void res.status(404).json({ error: "Snippet not found" });
+  res.json(updated);
 });
 
 export const remove = handle(async (req, res) => {
+  if (!req.isOwner) return void res.status(403).json({ error: "Only the owner can delete this snippet" });
+
   const snippet = await snippetService.remove(req.params.id);
   if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
   res.json({ message: "Snippet deleted" });
