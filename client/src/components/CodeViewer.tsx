@@ -21,19 +21,23 @@ export function editorHeight(code: string, minLines = 1) {
   return lines * LINE_HEIGHT + PADDING;
 }
 
+export type EditorInstance = Parameters<OnMount>[0];
+
 interface Props {
   code: string;
   language: string;
   onCite?: (citation: string) => void;
   citedLines?: Set<number>;
+  editorInstanceRef?: React.MutableRefObject<EditorInstance | null>;
 }
 
-export default function CodeViewer({ code, language, onCite, citedLines }: Props) {
-  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+export default function CodeViewer({ code, language, onCite, citedLines, editorInstanceRef }: Props) {
+  const editorRef = useRef<EditorInstance | null>(null);
   const decorationsRef = useRef<string[]>([]);
 
   const handleMount: OnMount = (editor) => {
     editorRef.current = editor;
+    if (editorInstanceRef) editorInstanceRef.current = editor;
 
     if (!onCite) return;
     editor.addAction({

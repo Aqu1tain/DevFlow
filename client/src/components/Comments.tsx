@@ -47,9 +47,10 @@ interface Props {
   commentsLoading: boolean;
   addComment: (body: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
+  onCiteClick?: (line: number) => void;
 }
 
-export default function Comments({ visibility, code, citeRef, comments, commentsLoading, addComment, deleteComment }: Props) {
+export default function Comments({ visibility, code, citeRef, comments, commentsLoading, addComment, deleteComment, onCiteClick }: Props) {
   const { user } = useAuth();
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -138,7 +139,7 @@ export default function Comments({ visibility, code, citeRef, comments, comments
                 </button>
               )}
             </div>
-            <CommentBody body={comment.body} code={code} />
+            <CommentBody body={comment.body} code={code} onCiteClick={onCiteClick} />
           </div>
         ))}
       </div>

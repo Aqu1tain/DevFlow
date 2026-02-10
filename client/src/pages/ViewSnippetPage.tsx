@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
 import useComments from "../hooks/useComments";
 import { CITE_RE } from "../components/CommentBody";
-import CodeViewer from "../components/CodeViewer";
+import CodeViewer, { type EditorInstance } from "../components/CodeViewer";
 import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
@@ -17,6 +17,7 @@ export default function ViewSnippetPage() {
   const { snippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
   const citeRef = useRef<((citation: string) => void) | null>(null);
+  const editorInstanceRef = useRef<EditorInstance | null>(null);
 
   const citedLines = useMemo(() => {
     const lines = new Set<number>();
@@ -36,6 +37,14 @@ export default function ViewSnippetPage() {
 
   const isOwner = !!user && user.id === snippet.userId;
   const canEdit = snippet.visibility === "public" || isOwner;
+
+  const handleCiteClick = (line: number) => {
+    const editor = editorInstanceRef.current;
+    if (!editor) return;
+    editor.revealLineInCenter(line);
+    editor.setPosition({ lineNumber: line, column: 1 });
+    editor.focus();
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -88,7 +97,7 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
-      <CodeViewer code={snippet.code} language={snippet.language} onCite={(c) => citeRef.current?.(c)} citedLines={citedLines} />
+      <CodeViewer code={snippet.code} language={snippet.language} onCite={(c) => citeRef.current?.(c)} citedLines={citedLines} editorInstanceRef={editorInstanceRef} />
 
       <Comments
         snippetId={snippet._id}
@@ -99,6 +108,7 @@ export default function ViewSnippetPage() {
         commentsLoading={commentsLoading}
         addComment={addComment}
         deleteComment={deleteComment}
+        onCiteClick={handleCiteClick}
       />
     </div>
   );

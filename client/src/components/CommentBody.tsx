@@ -23,9 +23,10 @@ function parseBody(body: string): Segment[] {
 interface Props {
   body: string;
   code: string;
+  onCiteClick?: (line: number) => void;
 }
 
-export default function CommentBody({ body, code }: Props) {
+export default function CommentBody({ body, code, onCiteClick }: Props) {
   const segments = parseBody(body);
   const lines = code.split("\n");
 
@@ -47,7 +48,11 @@ export default function CommentBody({ body, code }: Props) {
         const cited = lines.slice(startLine - 1, endLine);
         const gutterWidth = `${String(endLine).length + 1.5}ch`;
         return (
-          <div key={i} className="my-1.5 border border-emerald-500/20 bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm">
+          <div
+            key={i}
+            className="my-1.5 border border-emerald-500/20 bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm cursor-pointer hover:border-emerald-500/40 transition-colors"
+            onClick={() => onCiteClick?.(startLine)}
+          >
             {cited.map((line, j) => (
               <div key={j} className="flex">
                 <span className="select-none text-emerald-500/60 text-right shrink-0 px-1.5 bg-white/[0.02]" style={{ width: gutterWidth }}>
