@@ -9,7 +9,7 @@ const MIN_LINES = 12;
 interface Props {
   initial?: Partial<SnippetInput>;
   onSubmit: (data: SnippetInput) => void;
-  onSave?: (data: SnippetInput) => void;
+  onSave?: (data: SnippetInput) => void | Promise<void>;
   submitLabel: string;
 }
 
@@ -23,6 +23,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [description, setDescription] = useState(initial?.description ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
@@ -30,12 +31,18 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
     [title, language, description, code, tagsInput],
   );
 
+  const flashSaved = () => {
+    setSaveStatus("saved");
+    setTimeout(() => setSaveStatus("idle"), 1500);
+  };
+
   useEffect(() => {
     if (!onSave) return;
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         onSave(getData());
+        flashSaved();
       }
     };
     window.addEventListener("keydown", handler);
@@ -125,12 +132,17 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="tags: comma-separated"
         />
-        <button
-          type="submit"
-          className="cursor-pointer text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2 rounded-none transition-colors shrink-0"
-        >
-          {submitLabel}
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {saveStatus === "saved" && (
+            <span className="text-[11px] font-mono text-emerald-400 animate-pulse">saved</span>
+          )}
+          <button
+            type="submit"
+            className="cursor-pointer text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2 rounded-none transition-colors"
+          >
+            {submitLabel}
+          </button>
+        </div>
       </div>
     </form>
   );
