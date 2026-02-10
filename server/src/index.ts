@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import snippetRoutes from "./routes/snippets";
+import authRoutes from "./routes/auth";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const io = new Server(httpServer, {
 
 app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json());
+app.use("/api/auth", authRoutes);
 app.use("/api/snippets", snippetRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
