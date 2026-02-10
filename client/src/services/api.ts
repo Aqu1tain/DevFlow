@@ -70,24 +70,19 @@ export const snippetsApi = {
     request<{ message: string }>(`/snippets/${id}`, { method: "DELETE" }),
 };
 
+function post<T>(path: string, body?: object) {
+  return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+}
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
-    request<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, username }),
-    }),
+    post<AuthResponse>("/auth/register", { email, password, username }),
   login: (email: string, password: string) =>
-    request<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
+    post<AuthResponse>("/auth/login", { email, password }),
   guest: () =>
-    request<AuthResponse>("/auth/guest", { method: "POST" }),
+    post<AuthResponse>("/auth/guest"),
   convertGuest: (email: string, password: string, username?: string) =>
-    request<AuthResponse>("/auth/guest/convert", {
-      method: "POST",
-      body: JSON.stringify({ email, password, username }),
-    }),
+    post<AuthResponse>("/auth/guest/convert", { email, password, username }),
   me: () =>
     request<{ user: User }>("/auth/me"),
 };

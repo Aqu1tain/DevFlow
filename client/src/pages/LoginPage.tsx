@@ -10,22 +10,16 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async (action: () => Promise<string | null>) => {
     setLoading(true);
     setError("");
-    const err = await login(email, password);
+    const err = await action();
     if (err) { setError(err); setLoading(false); return; }
     navigate("/snippets");
   };
 
-  const handleGuest = async () => {
-    setLoading(true);
-    setError("");
-    const err = await loginAsGuest();
-    if (err) { setError(err); setLoading(false); return; }
-    navigate("/snippets");
-  };
+  const inputClass =
+    "w-full bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors";
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100 flex items-center justify-center px-4">
@@ -42,7 +36,7 @@ export default function LoginPage() {
             <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2">{error}</p>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); submit(() => login(email, password)); }} className="space-y-4">
             <div>
               <label className="block text-xs font-mono text-gray-400 mb-1.5">email</label>
               <input
@@ -50,7 +44,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className={inputClass}
                 placeholder="you@example.com"
               />
             </div>
@@ -62,7 +56,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                className={inputClass}
                 placeholder="••••••••"
               />
             </div>
@@ -86,7 +80,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={handleGuest}
+            onClick={() => submit(loginAsGuest)}
             disabled={loading}
             className="cursor-pointer w-full text-xs font-mono text-gray-400 hover:text-white border border-white/[0.08] hover:border-white/20 px-4 py-2.5 rounded-none transition-colors disabled:opacity-50"
           >

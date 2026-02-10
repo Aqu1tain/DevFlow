@@ -14,6 +14,12 @@ declare global {
 
 type Middleware = (req: Request, res: Response, next: NextFunction) => void;
 
+const attachUser = (req: Request, user: IUser) => {
+  req.user = user;
+  req.userId = String(user._id);
+  req.isGuest = user.isGuest;
+};
+
 export const authenticate: Middleware = async (req, res, next) => {
   const token = extractToken(req);
   if (!token) return void res.status(401).json({ error: "Authentication required" });
@@ -24,9 +30,7 @@ export const authenticate: Middleware = async (req, res, next) => {
     if (!user) return void res.status(401).json({ error: "User not found" });
     if (user.isGuest && user.isGuestExpired()) return void res.status(401).json({ error: "Guest session expired" });
 
-    req.user = user;
-    req.userId = String(user._id);
-    req.isGuest = user.isGuest;
+    attachUser(req, user);
     next();
   } catch {
     res.status(401).json({ error: "Invalid token" });
@@ -40,13 +44,9 @@ export const optionalAuth: Middleware = async (req, _res, next) => {
   try {
     const payload = verifyToken(token);
     const user = await User.findById(payload.userId);
-    if (user && (!user.isGuest || !user.isGuestExpired())) {
-      req.user = user;
-      req.userId = String(user._id);
-      req.isGuest = user.isGuest;
-    }
+    if (user && (!user.isGuest || !user.isGuestExpired())) attachUser(req, user);
   } catch {
-    // Invalid token — continue without auth
+    // silent — continue without auth
   }
 
   next();

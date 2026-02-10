@@ -29,6 +29,11 @@ const sanitize = (user: IUser) => ({
   guestExpiresAt: user.isGuest ? user.guestExpiresAt : undefined,
 });
 
+const authResponse = (user: IUser) => ({
+  token: generateToken(user),
+  user: sanitize(user),
+});
+
 export const register = handle(async (req, res) => {
   const { email, password, username } = req.body;
   if (!email || !password) throw fail("Email and password required");
@@ -43,7 +48,7 @@ export const register = handle(async (req, res) => {
     userType: "free",
   });
 
-  res.status(201).json({ token: generateToken(user), user: sanitize(user) });
+  res.status(201).json(authResponse(user));
 });
 
 export const login = handle(async (req, res) => {
@@ -56,12 +61,11 @@ export const login = handle(async (req, res) => {
   user.lastLoginAt = new Date();
   await user.save();
 
-  res.json({ token: generateToken(user), user: sanitize(user) });
+  res.json(authResponse(user));
 });
 
 export const createGuest = handle(async (_req, res) => {
-  const guest = await User.createGuest();
-  res.status(201).json({ token: generateToken(guest), user: sanitize(guest) });
+  res.status(201).json(authResponse(await User.createGuest()));
 });
 
 export const convertGuest = handle(async (req, res) => {
@@ -83,7 +87,7 @@ export const convertGuest = handle(async (req, res) => {
   user.guestExpiresAt = undefined;
   await user.save();
 
-  res.json({ token: generateToken(user), user: sanitize(user) });
+  res.json(authResponse(user));
 });
 
 export const me = handle(async (req, res) => {
