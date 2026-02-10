@@ -56,7 +56,7 @@ export default function SnippetsPage() {
                   {s.language}
                 </span>
                 {s.visibility !== "public" && (
-                  <span className={`text-[10px] font-mono ${visibilityStyle[s.visibility].text}`}>
+                  <span className={`text-[10px] font-mono ${visibilityStyle[s.visibility].color}`}>
                     {s.visibility}
                   </span>
                 )}

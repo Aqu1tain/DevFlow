@@ -18,7 +18,6 @@ export default function ViewSnippetPage() {
 
   const isOwner = !!user && user.id === snippet.userId;
   const canEdit = snippet.visibility === "public" || isOwner;
-  const canDelete = isOwner;
 
   const handleDelete = async () => {
     if (!id) return;
@@ -42,7 +41,7 @@ export default function ViewSnippetPage() {
                 Edit
               </Link>
             )}
-            {canDelete && (
+            {isOwner && (
               <Button variant="danger" onClick={handleDelete} className="px-3 py-1.5">
                 Delete
               </Button>
@@ -51,7 +50,7 @@ export default function ViewSnippetPage() {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className={`text-[11px] font-mono px-2 py-0.5 ${visibilityStyle[snippet.visibility].badge}`}>
+          <span className={`text-[11px] font-mono px-2 py-0.5 ${visibilityStyle[snippet.visibility].color} ${visibilityStyle[snippet.visibility].bg}`}>
             {snippet.visibility}
           </span>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5">

@@ -1,4 +1,4 @@
-import Snippet, { ISnippet } from "../models/Snippet";
+import Snippet from "../models/Snippet";
 
 export const findPublicAndOwn = (userId?: string) => {
   const filter = userId

@@ -53,11 +53,10 @@ export const update = handle(async (req, res) => {
   }
 
   const data = pick(req.body, EDITABLE_FIELDS);
-  if (req.isOwner && "visibility" in req.body) {
-    if (req.body.visibility === "private" && !canUsePrivate(req)) {
-      return void res.status(402).json({ error: "Private snippets require a Pro account" });
-    }
-    data.visibility = req.body.visibility;
+  const wantsPrivate = req.body.visibility === "private";
+  if (req.isOwner && "visibility" in req.body) data.visibility = req.body.visibility;
+  if (wantsPrivate && !canUsePrivate(req)) {
+    return void res.status(402).json({ error: "Private snippets require a Pro account" });
   }
 
   const updated = await snippetService.update(req.params.id, data);

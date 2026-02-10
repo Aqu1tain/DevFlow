@@ -19,11 +19,7 @@ function parseTags(input: string) {
   return input.split(",").map((t) => t.trim()).filter(Boolean);
 }
 
-const VISIBILITY_OPTIONS: { value: Visibility; proOnly?: boolean }[] = [
-  { value: "public" },
-  { value: "unlisted" },
-  { value: "private", proOnly: true },
-];
+const VISIBILITIES: Visibility[] = ["public", "unlisted", "private"];
 
 export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
   const { user } = useAuth();
@@ -109,8 +105,8 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as Visibility)}
           >
-            {VISIBILITY_OPTIONS.filter((v) => !v.proOnly || isPro).map((v) => (
-              <option key={v.value} value={v.value}>{v.value}</option>
+            {VISIBILITIES.filter((v) => v !== "private" || isPro).map((v) => (
+              <option key={v} value={v}>{v}</option>
             ))}
           </select>
           <select
