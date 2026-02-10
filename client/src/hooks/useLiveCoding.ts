@@ -43,25 +43,33 @@ export function useLiveCoding(snippetId: string | undefined) {
 
     socket.on("connect", () => {
       socketId.current = socket.id ?? null;
+      if (providerRef.current) {
+        socket.emit("join-snippet", snippetId, doc.clientID);
+      }
     });
 
     socket.emit("join-snippet", snippetId, doc.clientID);
 
     socket.on("room-state", (roomState: RoomState) => {
-      const provider = new YSocketProvider(doc, socket, roomState.state);
-      providerRef.current = provider;
+      if (!providerRef.current) {
+        const provider = new YSocketProvider(doc, socket, roomState.state);
+        providerRef.current = provider;
 
-      if (user) {
-        provider.awareness.setLocalStateField("user", {
-          name: user.username,
-          color: stringToColor(user.id),
+        if (user) {
+          provider.awareness.setLocalStateField("user", {
+            name: user.username,
+            color: stringToColor(user.id),
+          });
+        }
+
+        socket.on("sync-awareness", () => {
+          if (!providerRef.current) return;
+          const update = encodeAwarenessUpdate(providerRef.current.awareness, [doc.clientID]);
+          socket.emit("awareness-update", Array.from(update));
         });
+      } else {
+        Y.applyUpdate(doc, new Uint8Array(roomState.state));
       }
-
-      socket.on("sync-awareness", () => {
-        const update = encodeAwarenessUpdate(provider.awareness, [doc.clientID]);
-        socket.emit("awareness-update", Array.from(update));
-      });
 
       setModeState(roomState.mode);
       setUsers(roomState.users);

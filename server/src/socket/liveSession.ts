@@ -55,6 +55,9 @@ function evictStaleUser(room: Room, userId: string, snippetId: string, io: Serve
   for (const [sid, u] of room.users) {
     if (u.userId !== userId) continue;
     room.users.delete(sid);
+    if (sid === room.hostSocketId && room.users.size > 0) {
+      room.hostSocketId = room.users.values().next().value!.socketId;
+    }
     io.to(snippetId).emit("user-left", {
       users: roomUsers(room),
       hostSocketId: room.hostSocketId,
@@ -84,6 +87,10 @@ export function registerLiveSession(io: Server) {
         clientID,
       });
 
+      if (!room.users.has(room.hostSocketId)) {
+        room.hostSocketId = socket.id;
+      }
+
       socket.emit("room-state", {
         state: Buffer.from(Y.encodeStateAsUpdate(room.doc)).toJSON().data,
         mode: room.mode,
@@ -101,7 +108,7 @@ export function registerLiveSession(io: Server) {
     socket.on("yjs-update", (update: number[]) => {
       if (!currentSnippetId) return;
       const room = rooms.get(currentSnippetId);
-      if (!room) return;
+      if (!room || !room.users.has(socket.id)) return;
 
       if (room.mode === "visible" && socket.id !== room.hostSocketId) return;
 
@@ -112,6 +119,8 @@ export function registerLiveSession(io: Server) {
 
     socket.on("awareness-update", (update: number[]) => {
       if (!currentSnippetId) return;
+      const room = rooms.get(currentSnippetId);
+      if (!room || !room.users.has(socket.id)) return;
       socket.to(currentSnippetId).emit("awareness-update", update);
     });
 
