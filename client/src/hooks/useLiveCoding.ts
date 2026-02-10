@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
+import { encodeAwarenessUpdate, removeAwarenessStates } from "y-protocols/awareness";
 import { getSocket, disconnectSocket } from "../services/socket";
 import { YSocketProvider } from "../lib/YSocketProvider";
 import { useAuth } from "../context/AuthContext";
@@ -44,7 +45,7 @@ export function useLiveCoding(snippetId: string | undefined) {
       socketId.current = socket.id ?? null;
     });
 
-    socket.emit("join-snippet", snippetId);
+    socket.emit("join-snippet", snippetId, doc.clientID);
 
     socket.on("room-state", (roomState: RoomState) => {
       const provider = new YSocketProvider(doc, socket, roomState.state);
@@ -57,6 +58,11 @@ export function useLiveCoding(snippetId: string | undefined) {
         });
       }
 
+      socket.on("sync-awareness", () => {
+        const update = encodeAwarenessUpdate(provider.awareness, [doc.clientID]);
+        socket.emit("awareness-update", Array.from(update));
+      });
+
       setModeState(roomState.mode);
       setUsers(roomState.users);
       setHostSocketId(roomState.hostSocketId);
@@ -64,9 +70,12 @@ export function useLiveCoding(snippetId: string | undefined) {
     });
 
     socket.on("user-joined", ({ users }: { users: RoomUser[] }) => setUsers(users));
-    socket.on("user-left", ({ users, hostSocketId }: { users: RoomUser[]; hostSocketId: string }) => {
+    socket.on("user-left", ({ users, hostSocketId, leftClientID }: { users: RoomUser[]; hostSocketId: string; leftClientID?: number }) => {
       setUsers(users);
       setHostSocketId(hostSocketId);
+      if (leftClientID != null && providerRef.current) {
+        removeAwarenessStates(providerRef.current.awareness, [leftClientID], "peer left");
+      }
     });
     socket.on("mode-changed", (mode: Mode) => setModeState(mode));
 
@@ -92,6 +101,13 @@ function stringToColor(str: string): string {
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 60%)`;
+  const h = Math.abs(hash) % 360;
+  const s = 0.7, l = 0.6;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * c).toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
 }

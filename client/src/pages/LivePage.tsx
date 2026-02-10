@@ -34,7 +34,48 @@ export default function LivePage() {
       provider.awareness,
     );
 
+    const style = document.createElement("style");
+    document.head.appendChild(style);
+
+    const updateCursorStyles = () => {
+      const rules: string[] = [];
+      provider.awareness.getStates().forEach((state, clientID) => {
+        if (clientID === doc.clientID || !state.user) return;
+        const { color, name } = state.user;
+        rules.push(`
+          .yRemoteSelection-${clientID} {
+            background-color: ${color}33;
+          }
+          .yRemoteSelectionHead-${clientID} {
+            position: absolute;
+            border-left: 2px solid ${color};
+            border-top: 2px solid ${color};
+            height: 100% !important;
+          }
+          .yRemoteSelectionHead-${clientID}::after {
+            content: "${name}";
+            position: absolute;
+            top: -1.4em;
+            left: -2px;
+            font-size: 10px;
+            font-family: "JetBrains Mono", monospace;
+            background: ${color};
+            color: #0a0a0f;
+            padding: 1px 4px;
+            white-space: nowrap;
+            border-radius: 2px 2px 2px 0;
+          }
+        `);
+      });
+      style.textContent = rules.join("\n");
+    };
+
+    provider.awareness.on("change", updateCursorStyles);
+    updateCursorStyles();
+
     return () => {
+      provider.awareness.off("change", updateCursorStyles);
+      style.remove();
       bindingRef.current?.destroy();
       bindingRef.current = null;
     };

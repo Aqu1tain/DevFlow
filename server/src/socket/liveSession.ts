@@ -8,6 +8,7 @@ interface RoomUser {
   socketId: string;
   userId: string;
   username: string;
+  clientID: number;
 }
 
 interface Room {
@@ -54,7 +55,7 @@ export function registerLiveSession(io: Server) {
   io.on("connection", (socket) => {
     let currentSnippetId: string | null = null;
 
-    socket.on("join-snippet", async (snippetId: string) => {
+    socket.on("join-snippet", async (snippetId: string, clientID: number) => {
       const room = await getOrCreateRoom(snippetId, socket);
       if (!room) return socket.emit("error", "Snippet not found");
 
@@ -65,6 +66,7 @@ export function registerLiveSession(io: Server) {
         socketId: socket.id,
         userId: socket.data.userId,
         username: socket.data.username,
+        clientID,
       });
 
       socket.emit("room-state", {
@@ -77,6 +79,8 @@ export function registerLiveSession(io: Server) {
       socket.to(snippetId).emit("user-joined", {
         users: roomUsers(room),
       });
+
+      socket.to(snippetId).emit("sync-awareness");
     });
 
     socket.on("yjs-update", (update: number[]) => {
@@ -110,6 +114,7 @@ export function registerLiveSession(io: Server) {
       const room = rooms.get(currentSnippetId);
       if (!room) return;
 
+      const leaving = room.users.get(socket.id);
       room.users.delete(socket.id);
 
       if (room.users.size === 0) {
@@ -122,6 +127,7 @@ export function registerLiveSession(io: Server) {
         io.to(currentSnippetId).emit("user-left", {
           users: roomUsers(room),
           hostSocketId: room.hostSocketId,
+          leftClientID: leaving?.clientID,
         });
       }
     });
