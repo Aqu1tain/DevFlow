@@ -12,16 +12,20 @@ export default function EditSnippetPage() {
   if (error) return <p className="text-sm text-red-400">{error}</p>;
   if (!snippet) return <p className="text-sm text-red-400">Snippet not found</p>;
 
-  const handleSubmit = async (data: SnippetInput) => {
+  const save = async (data: SnippetInput) => {
     if (!id) return;
     await snippetsApi.update(id, data);
+  };
+
+  const handleSubmit = async (data: SnippetInput) => {
+    await save(data);
     navigate(`/snippets/${id}`);
   };
 
   return (
     <div>
       <h1 className="text-lg font-mono font-medium mb-6">edit snippet</h1>
-      <SnippetForm initial={snippet} onSubmit={handleSubmit} submitLabel="Save" />
+      <SnippetForm initial={snippet} onSubmit={handleSubmit} onSave={save} submitLabel="Save" />
     </div>
   );
 }

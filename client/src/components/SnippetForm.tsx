@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
@@ -9,6 +9,7 @@ const MIN_LINES = 12;
 interface Props {
   initial?: Partial<SnippetInput>;
   onSubmit: (data: SnippetInput) => void;
+  onSave?: (data: SnippetInput) => void;
   submitLabel: string;
 }
 
@@ -16,13 +17,30 @@ function parseTags(input: string) {
   return input.split(",").map((t) => t.trim()).filter(Boolean);
 }
 
-export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
+export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const getData = useCallback(
+    () => ({ title, language, description, code, tags: parseTags(tagsInput) }),
+    [title, language, description, code, tagsInput],
+  );
+
+  useEffect(() => {
+    if (!onSave) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        onSave(getData());
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onSave, getData]);
 
   const scrollCursorIntoView = (editor: Parameters<OnMount>[0]) => {
     const pos = editor.getPosition();
@@ -52,7 +70,7 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ title, language, description, code, tags: parseTags(tagsInput) });
+    onSubmit(getData());
   };
 
   const transparent = "bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none";
