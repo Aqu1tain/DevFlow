@@ -90,7 +90,7 @@ export default function ViewSnippetPage() {
             renderLineHighlight: "none",
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,
-            scrollbar: { vertical: "hidden", horizontal: "hidden" },
+            scrollbar: { vertical: "hidden", horizontal: "hidden", handleMouseWheel: false },
           }}
         />
       </div>

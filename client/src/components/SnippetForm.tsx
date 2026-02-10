@@ -30,14 +30,22 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
   );
   const editorRef = useRef<HTMLDivElement>(null);
 
+  const scrollCursorIntoView = (editor: Parameters<OnMount>[0]) => {
+    const pos = editor.getPosition();
+    if (!pos || !editorRef.current) return;
+    const lineTop = editorRef.current.getBoundingClientRect().top + pos.lineNumber * 20;
+    const viewportBottom = window.innerHeight - 60; // account for sticky footer
+    if (lineTop > viewportBottom) {
+      window.scrollBy({ top: lineTop - viewportBottom + 40, behavior: "smooth" });
+    }
+  };
+
   const handleEditorMount: OnMount = (editor) => {
     editor.onDidChangeModelContent(() => {
-      const pos = editor.getPosition();
-      if (pos) {
-        requestAnimationFrame(() => {
-          editorRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-        });
-      }
+      requestAnimationFrame(() => scrollCursorIntoView(editor));
+    });
+    editor.onDidChangeCursorPosition(() => {
+      requestAnimationFrame(() => scrollCursorIntoView(editor));
     });
   };
 
@@ -108,13 +116,13 @@ export default function SnippetForm({ initial, onSubmit, submitLabel }: Props) {
             renderLineHighlight: "none",
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,
-            scrollbar: { vertical: "hidden", horizontal: "hidden" },
+            scrollbar: { vertical: "hidden", horizontal: "hidden", handleMouseWheel: false },
           }}
         />
       </div>
 
-      {/* Footer: tags + submit */}
-      <div className="flex items-center justify-between gap-4">
+      {/* Footer: tags + submit — always visible */}
+      <div className="sticky bottom-0 bg-[#0a0a0f] border-t border-white/[0.06] -mx-5 px-5 py-3 flex items-center justify-between gap-4">
         <input
           className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-amber-500/50 transition-colors font-mono"
           value={tagsInput}
