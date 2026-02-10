@@ -35,8 +35,14 @@ const pick = <T extends Record<string, unknown>>(obj: T, keys: string[]) =>
 
 const EDITABLE_FIELDS = ["title", "language", "description", "code", "tags"];
 
+const canUsePrivate = (req: Request) =>
+  req.user?.userType === "pro" || req.user?.role === "admin";
+
 export const create = handle(async (req, res) => {
   const data = pick(req.body, [...EDITABLE_FIELDS, "visibility"]);
+  if (data.visibility === "private" && !canUsePrivate(req)) {
+    return void res.status(403).json({ error: "Private snippets require a Pro account" });
+  }
   res.status(201).json(await snippetService.create({ ...data, userId: req.userId }));
 });
 
@@ -47,7 +53,12 @@ export const update = handle(async (req, res) => {
   }
 
   const data = pick(req.body, EDITABLE_FIELDS);
-  if (req.isOwner && "visibility" in req.body) data.visibility = req.body.visibility;
+  if (req.isOwner && "visibility" in req.body) {
+    if (req.body.visibility === "private" && !canUsePrivate(req)) {
+      return void res.status(403).json({ error: "Private snippets require a Pro account" });
+    }
+    data.visibility = req.body.visibility;
+  }
 
   const updated = await snippetService.update(req.params.id, data);
   if (!updated) return void res.status(404).json({ error: "Snippet not found" });

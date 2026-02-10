@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput, Visibility } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
+import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
@@ -18,7 +19,15 @@ function parseTags(input: string) {
   return input.split(",").map((t) => t.trim()).filter(Boolean);
 }
 
+const VISIBILITY_OPTIONS: { value: Visibility; proOnly?: boolean }[] = [
+  { value: "public" },
+  { value: "unlisted" },
+  { value: "private", proOnly: true },
+];
+
 export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
+  const { user } = useAuth();
+  const isPro = user?.userType === "pro" || user?.role === "admin";
   const [title, setTitle] = useState(initial?.title ?? "");
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -100,9 +109,9 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as Visibility)}
           >
-            <option value="public">public</option>
-            <option value="unlisted">unlisted</option>
-            <option value="private">private</option>
+            {VISIBILITY_OPTIONS.filter((v) => !v.proOnly || isPro).map((v) => (
+              <option key={v.value} value={v.value}>{v.value}</option>
+            ))}
           </select>
           <select
             className="bg-transparent text-xs font-mono text-emerald-400 focus:outline-none cursor-pointer"
