@@ -3,6 +3,7 @@ import { snippetsApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
 import CodeViewer from "../components/CodeViewer";
+import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
 
@@ -71,6 +72,8 @@ export default function ViewSnippetPage() {
       </div>
 
       <CodeViewer code={snippet.code} language={snippet.language} />
+
+      <Comments snippetId={snippet._id} visibility={snippet.visibility} />
     </div>
   );
 }
