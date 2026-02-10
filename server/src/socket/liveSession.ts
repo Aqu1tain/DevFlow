@@ -51,6 +51,19 @@ async function saveAndDestroy(snippetId: string, room: Room) {
   rooms.delete(snippetId);
 }
 
+function evictStaleUser(room: Room, userId: string, snippetId: string, io: Server) {
+  for (const [sid, u] of room.users) {
+    if (u.userId !== userId) continue;
+    room.users.delete(sid);
+    io.to(snippetId).emit("user-left", {
+      users: roomUsers(room),
+      hostSocketId: room.hostSocketId,
+      leftClientID: u.clientID,
+    });
+    break;
+  }
+}
+
 export function registerLiveSession(io: Server) {
   io.on("connection", (socket) => {
     let currentSnippetId: string | null = null;
@@ -58,6 +71,8 @@ export function registerLiveSession(io: Server) {
     socket.on("join-snippet", async (snippetId: string, clientID: number) => {
       const room = await getOrCreateRoom(snippetId, socket);
       if (!room) return socket.emit("error", "Snippet not found");
+
+      evictStaleUser(room, socket.data.userId, snippetId, io);
 
       currentSnippetId = snippetId;
       socket.join(snippetId);
@@ -109,27 +124,32 @@ export function registerLiveSession(io: Server) {
       io.to(currentSnippetId).emit("mode-changed", mode);
     });
 
-    socket.on("disconnect", async () => {
+    function leaveRoom() {
       if (!currentSnippetId) return;
       const room = rooms.get(currentSnippetId);
-      if (!room) return;
+      if (!room || !room.users.has(socket.id)) return;
 
-      const leaving = room.users.get(socket.id);
+      const leaving = room.users.get(socket.id)!;
       room.users.delete(socket.id);
+      const snippetId = currentSnippetId;
+      currentSnippetId = null;
 
       if (room.users.size === 0) {
-        await saveAndDestroy(currentSnippetId, room);
+        saveAndDestroy(snippetId, room);
       } else {
         if (socket.id === room.hostSocketId) {
           const newHost = room.users.values().next().value!;
           room.hostSocketId = newHost.socketId;
         }
-        io.to(currentSnippetId).emit("user-left", {
+        io.to(snippetId).emit("user-left", {
           users: roomUsers(room),
           hostSocketId: room.hostSocketId,
-          leftClientID: leaving?.clientID,
+          leftClientID: leaving.clientID,
         });
       }
-    });
+    }
+
+    socket.on("leave-snippet", leaveRoom);
+    socket.on("disconnect", leaveRoom);
   });
 }

@@ -79,7 +79,13 @@ export function useLiveCoding(snippetId: string | undefined) {
     });
     socket.on("mode-changed", (mode: Mode) => setModeState(mode));
 
+    const leave = () => socket.emit("leave-snippet");
+
+    window.addEventListener("beforeunload", leave);
+
     return () => {
+      window.removeEventListener("beforeunload", leave);
+      leave();
       providerRef.current?.destroy();
       providerRef.current = null;
       doc.destroy();
