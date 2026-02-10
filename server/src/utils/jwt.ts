@@ -1,0 +1,30 @@
+import jwt, { type SignOptions } from "jsonwebtoken";
+import type { Request } from "express";
+import type { IUser } from "../models/User";
+
+const SECRET = process.env.JWT_SECRET || "change_me_in_production";
+const EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "7d") as SignOptions["expiresIn"];
+const GUEST_EXPIRES_IN = "24h" as SignOptions["expiresIn"];
+
+export interface TokenPayload {
+  userId: string;
+  userType: string;
+  role: string;
+  isGuest: boolean;
+}
+
+export const generateToken = (user: IUser): string => {
+  const payload = { userId: user._id, userType: user.userType, role: user.role, isGuest: user.isGuest };
+  const opts: SignOptions = { expiresIn: user.isGuest ? GUEST_EXPIRES_IN : EXPIRES_IN, issuer: "devflow" };
+  return jwt.sign(payload, SECRET, opts);
+};
+
+export const verifyToken = (token: string): TokenPayload =>
+  jwt.verify(token, SECRET, { issuer: "devflow" }) as TokenPayload;
+
+export const extractToken = (req: Request): string | null => {
+  const header = req.headers.authorization;
+  if (!header) return null;
+  const [scheme, token] = header.split(" ");
+  return scheme === "Bearer" && token ? token : null;
+};

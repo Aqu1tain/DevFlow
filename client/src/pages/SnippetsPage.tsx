@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { snippetsApi, type Snippet } from "../services/api";
+import { buttonClass } from "../components/Button";
 
 export default function SnippetsPage() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
@@ -23,10 +24,7 @@ export default function SnippetsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-lg font-mono font-medium">snippets</h1>
-        <Link
-          to="/snippets/new"
-          className="text-xs font-mono text-emerald-400 hover:text-black hover:bg-emerald-400 border border-emerald-400/30 px-3 py-1.5 transition-colors"
-        >
+        <Link to="/snippets/new" className={buttonClass("accent", "px-3 py-1.5")}>
           + new
         </Link>
       </div>

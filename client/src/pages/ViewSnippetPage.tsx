@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi } from "../services/api";
 import useSnippet from "../hooks/useSnippet";
 import CodeViewer from "../components/CodeViewer";
+import Button, { buttonClass } from "../components/Button";
 
 export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,19 +29,13 @@ export default function ViewSnippetPage() {
               <p className="text-sm text-gray-500 mt-1">{snippet.description}</p>
             )}
           </div>
-          <div className="flex gap-2 text-xs shrink-0 ml-4">
-            <Link
-              to={`/snippets/${id}/edit`}
-              className="text-gray-400 hover:text-white px-3 py-1.5 rounded-none border border-white/[0.08] hover:border-white/20 transition-colors font-mono"
-            >
+          <div className="flex gap-2 shrink-0 ml-4">
+            <Link to={`/snippets/${id}/edit`} className={buttonClass("ghost", "px-3 py-1.5")}>
               Edit
             </Link>
-            <button
-              onClick={handleDelete}
-              className="cursor-pointer text-gray-400 hover:text-red-400 px-3 py-1.5 rounded-none border border-white/[0.08] hover:border-red-500/30 transition-colors font-mono"
-            >
+            <Button variant="danger" onClick={handleDelete} className="px-3 py-1.5">
               Delete
-            </button>
+            </Button>
           </div>
         </div>
 

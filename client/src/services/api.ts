@@ -1,4 +1,24 @@
 const API_BASE = "/api";
+const TOKEN_KEY = "devflow_token";
+
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+export interface User {
+  id: string;
+  email?: string;
+  username: string;
+  userType: "guest" | "free" | "pro";
+  role: string;
+  isGuest: boolean;
+  guestExpiresAt?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
 
 export interface Snippet {
   _id: string;
@@ -14,10 +34,18 @@ export interface Snippet {
 export type SnippetInput = Omit<Snippet, "_id" | "createdAt" | "updatedAt">;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const token = getToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { headers, ...options });
+
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = "/login";
+    throw new Error("Session expired");
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Request failed (${res.status})`);
@@ -40,4 +68,21 @@ export const snippetsApi = {
     }),
   delete: (id: string) =>
     request<{ message: string }>(`/snippets/${id}`, { method: "DELETE" }),
+};
+
+function post<T>(path: string, body?: object) {
+  return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+}
+
+export const authApi = {
+  register: (email: string, password: string, username: string) =>
+    post<AuthResponse>("/auth/register", { email, password, username }),
+  login: (email: string, password: string) =>
+    post<AuthResponse>("/auth/login", { email, password }),
+  guest: () =>
+    post<AuthResponse>("/auth/guest"),
+  convertGuest: (email: string, password: string, username?: string) =>
+    post<AuthResponse>("/auth/guest/convert", { email, password, username }),
+  me: () =>
+    request<{ user: User }>("/auth/me"),
 };
