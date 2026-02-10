@@ -30,8 +30,14 @@ export const getById = handle(async (req, res) => {
   res.json(req.snippet);
 });
 
+const pick = <T extends Record<string, unknown>>(obj: T, keys: string[]) =>
+  Object.fromEntries(keys.filter((k) => k in obj).map((k) => [k, obj[k]]));
+
+const EDITABLE_FIELDS = ["title", "language", "description", "code", "tags"];
+
 export const create = handle(async (req, res) => {
-  res.status(201).json(await snippetService.create({ ...req.body, userId: req.userId }));
+  const data = pick(req.body, [...EDITABLE_FIELDS, "visibility"]);
+  res.status(201).json(await snippetService.create({ ...data, userId: req.userId }));
 });
 
 export const update = handle(async (req, res) => {
@@ -40,7 +46,10 @@ export const update = handle(async (req, res) => {
     return void res.status(403).json({ error: "Access denied" });
   }
 
-  const updated = await snippetService.update(req.params.id, req.body);
+  const data = pick(req.body, EDITABLE_FIELDS);
+  if (req.isOwner && "visibility" in req.body) data.visibility = req.body.visibility;
+
+  const updated = await snippetService.update(req.params.id, data);
   if (!updated) return void res.status(404).json({ error: "Snippet not found" });
   res.json(updated);
 });

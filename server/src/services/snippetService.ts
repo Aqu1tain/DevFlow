@@ -10,10 +10,10 @@ export const findPublicAndOwn = (userId?: string) => {
 export const findById = (id: string) =>
   Snippet.findById(id).exec();
 
-export const create = (data: Partial<ISnippet>) =>
+export const create = (data: Record<string, unknown>) =>
   Snippet.create(data);
 
-export const update = (id: string, data: Partial<ISnippet>) =>
+export const update = (id: string, data: Record<string, unknown>) =>
   Snippet.findByIdAndUpdate(id, data, { new: true, runValidators: true }).exec();
 
 export const remove = (id: string) =>
