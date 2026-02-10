@@ -30,9 +30,9 @@ export default function CommentBody({ body, code }: Props) {
   const lines = code.split("\n");
 
   return (
-    <span className="text-sm text-gray-300 whitespace-pre-wrap">
+    <div className="text-sm text-gray-300">
       {segments.map((seg, i) => {
-        if (seg.type === "text") return <span key={i}>{seg.value}</span>;
+        if (seg.type === "text") return <span key={i} className="whitespace-pre-wrap">{seg.value}</span>;
 
         const { startLine, endLine, raw } = seg;
         const inRange = startLine >= 1 && endLine <= lines.length;
@@ -47,20 +47,18 @@ export default function CommentBody({ body, code }: Props) {
         const cited = lines.slice(startLine - 1, endLine);
         const gutterWidth = `${String(endLine).length + 1.5}ch`;
         return (
-          <span key={i} className="inline-block align-middle my-0.5">
-            <span className="block border border-emerald-500/20 bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm">
-              {cited.map((line, j) => (
-                <span key={j} className="flex">
-                  <span className="select-none text-emerald-500/60 text-right shrink-0 px-1.5 bg-white/[0.02]" style={{ width: gutterWidth }}>
-                    {startLine + j}
-                  </span>
-                  <span className="text-gray-300 px-2 whitespace-pre">{line || " "}</span>
+          <div key={i} className="my-1.5 border border-emerald-500/20 bg-white/[0.03] text-xs font-mono overflow-x-auto max-w-sm">
+            {cited.map((line, j) => (
+              <div key={j} className="flex">
+                <span className="select-none text-emerald-500/60 text-right shrink-0 px-1.5 bg-white/[0.02]" style={{ width: gutterWidth }}>
+                  {startLine + j}
                 </span>
-              ))}
-            </span>
-          </span>
+                <span className="text-gray-300 px-2 whitespace-pre">{line || " "}</span>
+              </div>
+            ))}
+          </div>
         );
       })}
-    </span>
+    </div>
   );
 }
