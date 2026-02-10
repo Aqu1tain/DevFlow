@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/Button";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -61,13 +62,9 @@ export default function LoginPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer w-full text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2.5 rounded-none transition-colors disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="w-full px-4 py-2.5">
               {loading ? "signing in..." : "sign in"}
-            </button>
+            </Button>
           </form>
 
           <div className="relative">
@@ -79,13 +76,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button
-            onClick={() => submit(loginAsGuest)}
-            disabled={loading}
-            className="cursor-pointer w-full text-xs font-mono text-gray-400 hover:text-white border border-white/[0.08] hover:border-white/20 px-4 py-2.5 rounded-none transition-colors disabled:opacity-50"
-          >
+          <Button variant="ghost" onClick={() => submit(loginAsGuest)} disabled={loading} className="w-full px-4 py-2.5">
             continue as guest
-          </button>
+          </Button>
         </div>
 
         <p className="text-center text-xs text-gray-600">

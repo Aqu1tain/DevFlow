@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/Button";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -93,13 +94,9 @@ export default function RegisterPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer w-full text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2.5 rounded-none transition-colors disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="w-full px-4 py-2.5">
               {loading ? "creating account..." : "create account"}
-            </button>
+            </Button>
           </form>
         </div>
 

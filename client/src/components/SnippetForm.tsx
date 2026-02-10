@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
+import Button from "./Button";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
 const MIN_LINES = 12;
@@ -136,12 +137,9 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           {saveStatus === "saved" && (
             <span className="text-[11px] font-mono text-emerald-400 animate-pulse">saved</span>
           )}
-          <button
-            type="submit"
-            className="cursor-pointer text-xs font-mono bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2 rounded-none transition-colors"
-          >
+          <Button type="submit" className="px-5 py-2">
             {submitLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </form>
