@@ -20,6 +20,10 @@ const io = new Server(httpServer, {
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 app.use(express.json());
 
+// Routes
+import snippetRoutes from "./routes/snippets";
+app.use("/api/snippets", snippetRoutes);
+
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
