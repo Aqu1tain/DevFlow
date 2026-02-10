@@ -32,3 +32,6 @@ dump.rdb
 
 # Coverage
 coverage/
+
+# Screenshots
+screenshots/
