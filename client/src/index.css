@@ -4,3 +4,14 @@
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
+
+.cited-line-highlight {
+  background: rgba(16, 185, 129, 0.06) !important;
+}
+
+.cited-line-glyph {
+  background: rgba(16, 185, 129, 0.5);
+  width: 3px !important;
+  margin-left: 3px;
+  border-radius: 1px;
+}
