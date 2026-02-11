@@ -124,7 +124,7 @@ export default function Comments({ visibility, code, citeRef, comments, comments
 
       <div className="space-y-3">
         {comments.map((comment) => (
-          <div key={comment._id} className="border border-white/[0.08] bg-white/[0.02] p-3">
+          <div key={comment._id} id={`comment-${comment._id}`} className="border border-white/[0.08] bg-white/[0.02] p-3">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-emerald-400">{comment.userId.username}</span>

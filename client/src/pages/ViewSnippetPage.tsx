@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
 import useComments from "../hooks/useComments";
 import { CITE_RE } from "../components/CommentBody";
-import CodeViewer, { type EditorInstance } from "../components/CodeViewer";
+import CodeViewer, { type EditorInstance, type LineComment } from "../components/CodeViewer";
 import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
@@ -19,16 +19,20 @@ export default function ViewSnippetPage() {
   const citeRef = useRef<((citation: string) => void) | null>(null);
   const editorInstanceRef = useRef<EditorInstance | null>(null);
 
-  const citedLines = useMemo(() => {
-    const lines = new Set<number>();
+  const lineComments = useMemo(() => {
+    const map = new Map<number, LineComment[]>();
     for (const c of comments) {
       for (const m of c.body.matchAll(new RegExp(CITE_RE.source, "g"))) {
         const start = parseInt(m[1]);
         const end = m[2] ? parseInt(m[2]) : start;
-        for (let i = start; i <= end; i++) lines.add(i);
+        const entry: LineComment = { commentId: c._id, username: c.userId.username, body: c.body };
+        for (let i = start; i <= end; i++) {
+          const existing = map.get(i) || [];
+          if (!existing.some((e) => e.commentId === entry.commentId)) map.set(i, [...existing, entry]);
+        }
       }
     }
-    return lines;
+    return map;
   }, [comments]);
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
@@ -44,6 +48,14 @@ export default function ViewSnippetPage() {
     editor.revealLineInCenter(line);
     editor.setPosition({ lineNumber: line, column: 1 });
     editor.focus();
+  };
+
+  const scrollToComment = (commentId: string) => {
+    const el = document.getElementById(`comment-${commentId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("comment-flash");
+    el.addEventListener("animationend", () => el.classList.remove("comment-flash"), { once: true });
   };
 
   const handleDelete = async () => {
@@ -97,7 +109,14 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
-      <CodeViewer code={snippet.code} language={snippet.language} onCite={(c) => citeRef.current?.(c)} citedLines={citedLines} editorInstanceRef={editorInstanceRef} />
+      <CodeViewer
+        code={snippet.code}
+        language={snippet.language}
+        onCite={(c) => citeRef.current?.(c)}
+        lineComments={lineComments}
+        editorInstanceRef={editorInstanceRef}
+        onCommentClick={scrollToComment}
+      />
 
       <Comments
         snippetId={snippet._id}
