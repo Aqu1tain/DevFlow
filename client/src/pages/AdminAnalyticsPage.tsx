@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { adminApi, type AdminStats } from "../services/api";
+
+type BarChartItem = { label: string; value: number; color: string };
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
@@ -12,7 +14,7 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-function BarChart({ items, total }: { items: { label: string; value: number; color: string }[]; total: number }) {
+function BarChart({ items, total }: { items: BarChartItem[]; total: number }) {
   if (total === 0) return <p className="text-xs text-gray-600 font-mono">no data</p>;
   return (
     <div className="space-y-2.5">
@@ -34,7 +36,7 @@ function BarChart({ items, total }: { items: { label: string; value: number; col
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
       <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-4">{title}</h2>
@@ -62,6 +64,10 @@ export default function AdminAnalyticsPage() {
   if (error) return <p className="text-sm text-red-400">{error}</p>;
   if (!stats) return null;
 
+  const proRatio = stats.users.total
+    ? `${Math.round((stats.users.pro / stats.users.total) * 100)}%`
+    : "0%";
+
   const visibilityItems = [
     { label: "public", value: stats.snippets.public, color: "bg-gray-400" },
     { label: "unlisted", value: stats.snippets.unlisted, color: "bg-amber-400" },
@@ -85,7 +91,7 @@ export default function AdminAnalyticsPage() {
           <StatCard label="total snippets" value={stats.snippets.total} />
           <StatCard label="total users" value={stats.users.total} />
           <StatCard label="pro users" value={stats.users.pro} />
-          <StatCard label="pro ratio" value={stats.users.total ? `${Math.round((stats.users.pro / stats.users.total) * 100)}%` : "0%"} />
+          <StatCard label="pro ratio" value={proRatio} />
         </div>
       </Section>
 
