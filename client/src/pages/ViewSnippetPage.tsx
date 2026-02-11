@@ -20,6 +20,8 @@ export default function ViewSnippetPage() {
   const editorInstanceRef = useRef<EditorInstance | null>(null);
 
   const lineComments = useMemo(() => {
+    if (!snippet) return new Map<number, LineComment[]>();
+    const totalLines = snippet.code.split("\n").length;
     const map = new Map<number, LineComment[]>();
     for (const c of comments) {
       for (const m of c.body.matchAll(new RegExp(CITE_RE.source, "g"))) {
@@ -27,13 +29,14 @@ export default function ViewSnippetPage() {
         const end = m[2] ? parseInt(m[2]) : start;
         const entry: LineComment = { commentId: c._id, username: c.userId.username, body: c.body };
         for (let i = start; i <= end; i++) {
+          if (i < 1 || i > totalLines) continue;
           const existing = map.get(i) || [];
           if (!existing.some((e) => e.commentId === entry.commentId)) map.set(i, [...existing, entry]);
         }
       }
     }
     return map;
-  }, [comments]);
+  }, [comments, snippet]);
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
   if (error) return <p className="text-sm text-red-400">{error}</p>;
@@ -128,6 +131,7 @@ export default function ViewSnippetPage() {
         addComment={addComment}
         deleteComment={deleteComment}
         onCiteClick={handleCiteClick}
+        snippetUpdatedAt={snippet.updatedAt}
       />
     </div>
   );

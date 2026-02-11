@@ -111,7 +111,7 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
   const popoverTop = popoverLine !== null ? PADDING_TOP + (popoverLine - 1) * LINE_HEIGHT : 0;
 
   return (
-    <div className="relative">
+    <div className="relative overflow-visible">
       <div className="rounded-lg overflow-hidden border border-white/[0.06]">
         <Editor
           height={`${editorHeight(code)}px`}
@@ -124,12 +124,12 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
       </div>
 
       {hasGlyph && (
-        <div className="absolute left-0 top-0 z-[5] pointer-events-none" style={{ paddingTop: 1 + PADDING_TOP }}>
+        <div className="absolute left-0 top-0 z-[5] pointer-events-none">
           {[...lineComments!.entries()].map(([line, comments]) => (
             <button
               key={line}
               className="absolute left-1.5 pointer-events-auto cursor-pointer hover:scale-110 transition-transform"
-              style={{ top: (line - 1) * LINE_HEIGHT }}
+              style={{ top: 1 + PADDING_TOP + (line - 1) * LINE_HEIGHT }}
               onClick={() => setPopoverLine((prev) => (prev === line ? null : line))}
               title={`${comments.length} comment${comments.length > 1 ? "s" : ""}`}
             >

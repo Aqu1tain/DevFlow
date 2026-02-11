@@ -48,9 +48,10 @@ interface Props {
   addComment: (body: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
   onCiteClick?: (line: number) => void;
+  snippetUpdatedAt: string;
 }
 
-export default function Comments({ visibility, code, citeRef, comments, commentsLoading, addComment, deleteComment, onCiteClick }: Props) {
+export default function Comments({ visibility, code, citeRef, comments, commentsLoading, addComment, deleteComment, onCiteClick, snippetUpdatedAt }: Props) {
   const { user } = useAuth();
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -139,7 +140,12 @@ export default function Comments({ visibility, code, citeRef, comments, comments
                 </button>
               )}
             </div>
-            <CommentBody body={comment.body} code={code} onCiteClick={onCiteClick} />
+            <CommentBody
+              body={comment.body}
+              code={code}
+              onCiteClick={onCiteClick}
+              stale={new Date(snippetUpdatedAt) > new Date(comment.createdAt)}
+            />
           </div>
         ))}
       </div>
