@@ -1,6 +1,24 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
 import User, { IUser } from "../models/User";
 import { generateToken } from "../utils/jwt";
+
+interface GitHubTokenResponse {
+  access_token?: string;
+  error?: string;
+}
+
+interface GitHubUser {
+  id: number;
+  login: string;
+  email?: string;
+}
+
+interface GitHubEmail {
+  email: string;
+  primary: boolean;
+  verified: boolean;
+}
 
 type Handler = (req: Request, res: Response) => Promise<void>;
 
@@ -93,3 +111,127 @@ export const convertGuest = handle(async (req, res) => {
 export const me = handle(async (req, res) => {
   res.json({ user: sanitize(req.user!) });
 });
+
+const GITHUB = {
+  authorize: "https://github.com/login/oauth/authorize",
+  token: "https://github.com/login/oauth/access_token",
+  user: "https://api.github.com/user",
+  emails: "https://api.github.com/user/emails",
+};
+
+const STATE_TTL = 10 * 60 * 1000;
+const HMAC_SECRET = process.env.JWT_SECRET || "change_me_in_production";
+
+const hmac = (data: string) =>
+  crypto.createHmac("sha256", HMAC_SECRET).update(data).digest("hex").slice(0, 16);
+
+const signState = () => {
+  const ts = Date.now().toString();
+  return `${ts}.${hmac(ts)}`;
+};
+
+const verifyState = (state: string) => {
+  const [ts, sig] = state.split(".");
+  if (!ts || !sig || sig !== hmac(ts)) return false;
+  return Date.now() - parseInt(ts) < STATE_TTL;
+};
+
+const serverUrl = () =>
+  process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+
+const clientUrl = () =>
+  process.env.CLIENT_URL || "http://localhost:5173";
+
+export const githubRedirect = (_req: Request, res: Response) => {
+  const params = new URLSearchParams({
+    client_id: process.env.GITHUB_CLIENT_ID!,
+    redirect_uri: `${serverUrl()}/api/auth/github/callback`,
+    scope: "user:email",
+    state: signState(),
+  });
+  res.redirect(`${GITHUB.authorize}?${params}`);
+};
+
+const getGitHubAccessToken = async (code: string): Promise<string> => {
+  const res = await fetch(GITHUB.token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      client_id: process.env.GITHUB_CLIENT_ID,
+      client_secret: process.env.GITHUB_CLIENT_SECRET,
+      code,
+    }),
+  });
+  const data = await res.json() as GitHubTokenResponse;
+  if (!data.access_token) throw new Error("Failed to get GitHub access token");
+  return data.access_token;
+};
+
+const githubHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  "User-Agent": "DevFlow",
+});
+
+const getPrimaryEmail = (emails: GitHubEmail[]): string | null => {
+  if (!Array.isArray(emails)) return null;
+  return emails.find((e) => e.primary && e.verified)?.email ?? null;
+};
+
+const getGitHubUser = async (accessToken: string): Promise<{ githubUser: GitHubUser; email: string | null }> => {
+  const headers = githubHeaders(accessToken);
+  const [userRes, emailsRes] = await Promise.all([fetch(GITHUB.user, { headers }), fetch(GITHUB.emails, { headers })]);
+
+  const githubUser = await userRes.json() as GitHubUser;
+  const emails = await emailsRes.json() as GitHubEmail[];
+  const email = githubUser.email ?? getPrimaryEmail(emails);
+
+  return { githubUser, email };
+};
+
+const uniqueUsername = async (base: string): Promise<string> => {
+  const taken = await User.exists({ username: base });
+  if (!taken) return base;
+  return `${base}_${Date.now().toString(36).slice(-4)}`;
+};
+
+const findOrCreateGitHubUser = async (githubUser: GitHubUser, email: string | null): Promise<IUser> => {
+  const ghId = String(githubUser.id);
+  let user = await User.findOne({ githubId: ghId });
+
+  if (!user && email) {
+    user = await User.findOne({ email: email.toLowerCase(), isGuest: false });
+  }
+
+  if (user) {
+    if (!user.githubId) user.githubId = ghId;
+    user.lastLoginAt = new Date();
+    await user.save();
+    return user;
+  }
+
+  return User.create({
+    githubId: ghId,
+    email: email?.toLowerCase(),
+    username: await uniqueUsername(githubUser.login),
+    userType: "free",
+  });
+};
+
+export const githubCallback = async (req: Request, res: Response) => {
+  const failUrl = `${clientUrl()}/login?error=github_auth_failed`;
+
+  const { code, state } = req.query;
+  if (typeof code !== "string" || typeof state !== "string" || !verifyState(state)) {
+    return res.redirect(failUrl);
+  }
+
+  try {
+    const accessToken = await getGitHubAccessToken(code);
+    const { githubUser, email } = await getGitHubUser(accessToken);
+    const user = await findOrCreateGitHubUser(githubUser, email);
+    const token = generateToken(user);
+    res.redirect(`${clientUrl()}/auth/callback?token=${token}`);
+  } catch {
+    res.redirect(failUrl);
+  }
+};

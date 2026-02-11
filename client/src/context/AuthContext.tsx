@@ -8,6 +8,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<string | null>;
   register: (email: string, password: string, username: string) => Promise<string | null>;
   loginAsGuest: () => Promise<string | null>;
+  loginWithToken: (token: string) => Promise<string | null>;
   logout: () => void;
 }
 
@@ -53,6 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginAsGuest = () => handleAuth(() => authApi.guest());
 
+  const loginWithToken = async (token: string) => {
+    setToken(token);
+    try {
+      const { user } = await authApi.me();
+      setUser(user);
+      return null;
+    } catch (err) {
+      clearToken();
+      return err instanceof Error ? err.message : "Authentication failed";
+    }
+  };
+
   const logout = () => {
     clearToken();
     setUser(null);
@@ -60,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAuthenticated: !!user, login, register, loginAsGuest, logout }}
+      value={{ user, loading, isAuthenticated: !!user, login, register, loginAsGuest, loginWithToken, logout }}
     >
       {children}
     </AuthContext.Provider>
