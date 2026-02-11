@@ -12,6 +12,8 @@ import SnapshotPanel from "../components/SnapshotPanel";
 import useSnapshots from "../hooks/useSnapshots";
 import useExecution, { canRun } from "../hooks/useExecution";
 import OutputPanel from "../components/OutputPanel";
+import useAI from "../hooks/useAI";
+import AIPanel from "../components/AIPanel";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -46,6 +48,7 @@ export default function ViewSnippetPage() {
   const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
   const { snapshots, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
   const { output, running, duration, run, clear } = useExecution();
+  const ai = useAI();
   const [showHistory, setShowHistory] = useState(false);
   const citeRef = useRef<((citation: string) => void) | null>(null);
   const editorInstanceRef = useRef<EditorInstance | null>(null);
@@ -107,6 +110,26 @@ export default function ViewSnippetPage() {
                 {running ? "Running..." : "Run"}
               </Button>
             )}
+            {user?.userType === "pro" && (
+              <>
+                <Button
+                  variant="accent"
+                  className="px-3 py-1.5"
+                  onClick={() => ai.ask(snippet.code, snippet.language, "explain")}
+                  disabled={ai.loading}
+                >
+                  Explain
+                </Button>
+                <Button
+                  variant="accent"
+                  className="px-3 py-1.5"
+                  onClick={() => ai.ask(snippet.code, snippet.language, "correct")}
+                  disabled={ai.loading}
+                >
+                  Correct
+                </Button>
+              </>
+            )}
             <Link to={`/snippets/${id}/live`} className={buttonClass("accent", "px-3 py-1.5")}>
               Go Live
             </Link>
@@ -167,6 +190,16 @@ export default function ViewSnippetPage() {
       />
 
       {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
+
+      {ai.action && (
+        <AIPanel
+          content={ai.content}
+          action={ai.action}
+          loading={ai.loading}
+          error={ai.error}
+          onClear={ai.clear}
+        />
+      )}
 
       <Comments
         visibility={snippet.visibility}
