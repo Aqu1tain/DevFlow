@@ -5,7 +5,7 @@ import User from "../src/models/User";
 
 dotenv.config();
 
-const TOTAL = 1_000_000;
+const TOTAL = parseInt(process.env.SEED_COUNT || "1000000");
 const BATCH = 10_000;
 
 const LANGUAGES = ["javascript", "typescript", "python", "go", "rust", "java", "css", "html", "sql", "bash", "c", "cpp", "ruby", "php", "swift"];
