@@ -120,26 +120,32 @@ const GITHUB = {
 };
 
 const STATE_TTL = 10 * 60 * 1000;
-const hmacSecret = () => process.env.JWT_SECRET || "change_me_in_production";
+const HMAC_SECRET = process.env.JWT_SECRET || "change_me_in_production";
+
+const hmac = (data: string) =>
+  crypto.createHmac("sha256", HMAC_SECRET).update(data).digest("hex").slice(0, 16);
 
 const signState = () => {
   const ts = Date.now().toString();
-  const sig = crypto.createHmac("sha256", hmacSecret()).update(ts).digest("hex").slice(0, 16);
-  return `${ts}.${sig}`;
+  return `${ts}.${hmac(ts)}`;
 };
 
 const verifyState = (state: string) => {
   const [ts, sig] = state.split(".");
-  if (!ts || !sig) return false;
-  const expected = crypto.createHmac("sha256", hmacSecret()).update(ts).digest("hex").slice(0, 16);
-  if (sig !== expected) return false;
+  if (!ts || !sig || sig !== hmac(ts)) return false;
   return Date.now() - parseInt(ts) < STATE_TTL;
 };
+
+const serverUrl = () =>
+  process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+
+const clientUrl = () =>
+  process.env.CLIENT_URL || "http://localhost:5173";
 
 export const githubRedirect = (_req: Request, res: Response) => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID!,
-    redirect_uri: `${process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`}/api/auth/github/callback`,
+    redirect_uri: `${serverUrl()}/api/auth/github/callback`,
     scope: "user:email",
     state: signState(),
   });
@@ -166,8 +172,10 @@ const githubHeaders = (token: string) => ({
   "User-Agent": "DevFlow",
 });
 
-const getPrimaryEmail = (emails: GitHubEmail[]): string | null =>
-  (Array.isArray(emails) ? emails.find((e) => e.primary && e.verified)?.email : null) ?? null;
+const getPrimaryEmail = (emails: GitHubEmail[]): string | null => {
+  if (!Array.isArray(emails)) return null;
+  return emails.find((e) => e.primary && e.verified)?.email ?? null;
+};
 
 const getGitHubUser = async (accessToken: string): Promise<{ githubUser: GitHubUser; email: string | null }> => {
   const headers = githubHeaders(accessToken);
@@ -210,8 +218,7 @@ const findOrCreateGitHubUser = async (githubUser: GitHubUser, email: string | nu
 };
 
 export const githubCallback = async (req: Request, res: Response) => {
-  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-  const failUrl = `${clientUrl}/login?error=github_auth_failed`;
+  const failUrl = `${clientUrl()}/login?error=github_auth_failed`;
 
   const { code, state } = req.query;
   if (typeof code !== "string" || typeof state !== "string" || !verifyState(state)) {
@@ -223,7 +230,7 @@ export const githubCallback = async (req: Request, res: Response) => {
     const { githubUser, email } = await getGitHubUser(accessToken);
     const user = await findOrCreateGitHubUser(githubUser, email);
     const token = generateToken(user);
-    res.redirect(`${clientUrl}/auth/callback?token=${token}`);
+    res.redirect(`${clientUrl()}/auth/callback?token=${token}`);
   } catch {
     res.redirect(failUrl);
   }
