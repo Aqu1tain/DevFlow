@@ -69,6 +69,7 @@ const userSchema = new Schema<IUser>(
 
 userSchema.index({ email: 1 });
 userSchema.index({ guestSessionId: 1 });
+userSchema.index({ githubId: 1 }, { sparse: true, unique: true });
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password") || this.isGuest || !this.password) return next();

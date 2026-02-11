@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Request, Response } from "express";
 import User, { IUser } from "../models/User";
 import { generateToken } from "../utils/jwt";
@@ -118,11 +119,29 @@ const GITHUB = {
   emails: "https://api.github.com/user/emails",
 };
 
+const STATE_TTL = 10 * 60 * 1000;
+const hmacSecret = () => process.env.JWT_SECRET || "change_me_in_production";
+
+const signState = () => {
+  const ts = Date.now().toString();
+  const sig = crypto.createHmac("sha256", hmacSecret()).update(ts).digest("hex").slice(0, 16);
+  return `${ts}.${sig}`;
+};
+
+const verifyState = (state: string) => {
+  const [ts, sig] = state.split(".");
+  if (!ts || !sig) return false;
+  const expected = crypto.createHmac("sha256", hmacSecret()).update(ts).digest("hex").slice(0, 16);
+  if (sig !== expected) return false;
+  return Date.now() - parseInt(ts) < STATE_TTL;
+};
+
 export const githubRedirect = (_req: Request, res: Response) => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID!,
     redirect_uri: `${process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`}/api/auth/github/callback`,
     scope: "user:email",
+    state: signState(),
   });
   res.redirect(`${GITHUB.authorize}?${params}`);
 };
@@ -161,41 +180,51 @@ const getGitHubUser = async (accessToken: string): Promise<{ githubUser: GitHubU
   return { githubUser, email };
 };
 
+const uniqueUsername = async (base: string): Promise<string> => {
+  const taken = await User.exists({ username: base });
+  if (!taken) return base;
+  return `${base}_${Date.now().toString(36).slice(-4)}`;
+};
+
 const findOrCreateGitHubUser = async (githubUser: GitHubUser, email: string | null): Promise<IUser> => {
-  let user = await User.findOne({ githubId: String(githubUser.id) });
+  const ghId = String(githubUser.id);
+  let user = await User.findOne({ githubId: ghId });
 
   if (!user && email) {
     user = await User.findOne({ email: email.toLowerCase(), isGuest: false });
   }
 
   if (user) {
-    if (!user.githubId) user.githubId = String(githubUser.id);
+    if (!user.githubId) user.githubId = ghId;
     user.lastLoginAt = new Date();
     await user.save();
     return user;
   }
 
   return User.create({
-    githubId: String(githubUser.id),
+    githubId: ghId,
     email: email?.toLowerCase(),
-    username: githubUser.login,
+    username: await uniqueUsername(githubUser.login),
     userType: "free",
   });
 };
 
 export const githubCallback = async (req: Request, res: Response) => {
   const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-  try {
-    const code = req.query.code as string;
-    if (!code) throw new Error("No code provided");
+  const failUrl = `${clientUrl}/login?error=github_auth_failed`;
 
+  const { code, state } = req.query;
+  if (typeof code !== "string" || typeof state !== "string" || !verifyState(state)) {
+    return res.redirect(failUrl);
+  }
+
+  try {
     const accessToken = await getGitHubAccessToken(code);
     const { githubUser, email } = await getGitHubUser(accessToken);
     const user = await findOrCreateGitHubUser(githubUser, email);
     const token = generateToken(user);
-
     res.redirect(`${clientUrl}/auth/callback?token=${token}`);
   } catch {
-    res.redirect(`${clientUrl}/login?error=github_auth_failed`);
+    res.redirect(failUrl);
   }
 };
