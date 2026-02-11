@@ -9,9 +9,11 @@
   background: rgba(16, 185, 129, 0.06) !important;
 }
 
-.cited-line-glyph {
-  background: rgba(16, 185, 129, 0.5);
-  width: 3px !important;
-  margin-left: 3px;
-  border-radius: 1px;
+@keyframes comment-flash {
+  0% { border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.08); }
+  100% { border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); }
+}
+
+.comment-flash {
+  animation: comment-flash 1.5s ease-out;
 }
