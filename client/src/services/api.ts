@@ -74,6 +74,29 @@ export const snippetsApi = {
     request<{ message: string }>(`/snippets/${id}`, { method: "DELETE" }),
 };
 
+export interface Comment {
+  _id: string;
+  snippetId: string;
+  userId: { _id: string; username: string };
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const commentsApi = {
+  getAll: (snippetId: string) =>
+    request<Comment[]>(`/snippets/${snippetId}/comments`),
+  create: (snippetId: string, body: string) =>
+    request<Comment>(`/snippets/${snippetId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }),
+  delete: (snippetId: string, commentId: string) =>
+    request<{ message: string }>(`/snippets/${snippetId}/comments/${commentId}`, {
+      method: "DELETE",
+    }),
+};
+
 function post<T>(path: string, body?: object) {
   return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
 }

@@ -1,8 +1,12 @@
+import { useMemo, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
-import CodeViewer from "../components/CodeViewer";
+import useComments from "../hooks/useComments";
+import { CITE_RE } from "../components/CommentBody";
+import CodeViewer, { type EditorInstance } from "../components/CodeViewer";
+import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
 
@@ -11,6 +15,21 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { snippet, loading, error } = useSnippet(id);
+  const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
+  const citeRef = useRef<((citation: string) => void) | null>(null);
+  const editorInstanceRef = useRef<EditorInstance | null>(null);
+
+  const citedLines = useMemo(() => {
+    const lines = new Set<number>();
+    for (const c of comments) {
+      for (const m of c.body.matchAll(new RegExp(CITE_RE.source, "g"))) {
+        const start = parseInt(m[1]);
+        const end = m[2] ? parseInt(m[2]) : start;
+        for (let i = start; i <= end; i++) lines.add(i);
+      }
+    }
+    return lines;
+  }, [comments]);
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
   if (error) return <p className="text-sm text-red-400">{error}</p>;
@@ -18,6 +37,14 @@ export default function ViewSnippetPage() {
 
   const isOwner = !!user && user.id === snippet.userId;
   const canEdit = snippet.visibility === "public" || isOwner;
+
+  const handleCiteClick = (line: number) => {
+    const editor = editorInstanceRef.current;
+    if (!editor) return;
+    editor.revealLineInCenter(line);
+    editor.setPosition({ lineNumber: line, column: 1 });
+    editor.focus();
+  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -70,7 +97,19 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
-      <CodeViewer code={snippet.code} language={snippet.language} />
+      <CodeViewer code={snippet.code} language={snippet.language} onCite={(c) => citeRef.current?.(c)} citedLines={citedLines} editorInstanceRef={editorInstanceRef} />
+
+      <Comments
+        snippetId={snippet._id}
+        visibility={snippet.visibility}
+        code={snippet.code}
+        citeRef={citeRef}
+        comments={comments}
+        commentsLoading={commentsLoading}
+        addComment={addComment}
+        deleteComment={deleteComment}
+        onCiteClick={handleCiteClick}
+      />
     </div>
   );
 }
