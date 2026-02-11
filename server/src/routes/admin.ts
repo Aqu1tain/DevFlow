@@ -3,6 +3,7 @@ import { authenticate, requireAdmin } from "../middlewares/auth";
 import * as snippetService from "../services/snippetService";
 import * as commentService from "../services/commentService";
 import * as snapshotService from "../services/snapshotService";
+import * as userService from "../services/userService";
 
 const router = Router();
 
@@ -18,6 +19,11 @@ const handle =
       res.status(500).json({ error: "Internal server error" });
     }
   };
+
+router.get("/stats", handle(async (_req, res) => {
+  const [snippets, users] = await Promise.all([snippetService.getStats(), userService.getStats()]);
+  res.json({ snippets, users });
+}));
 
 router.get("/snippets", handle(async (_req, res) => {
   res.json(await snippetService.findAll());

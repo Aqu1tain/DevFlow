@@ -10,6 +10,7 @@ import EditSnippetPage from "./pages/EditSnippetPage";
 import ViewSnippetPage from "./pages/ViewSnippetPage";
 import LivePage from "./pages/LivePage";
 import AdminPage from "./pages/AdminPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -24,9 +25,14 @@ function AppLayout() {
           {user && (
             <div className="flex items-center gap-4">
               {user.role === "admin" && (
-                <Link to="/admin" className="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors">
-                  admin
-                </Link>
+                <>
+                  <Link to="/admin" className="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors">
+                    moderation
+                  </Link>
+                  <Link to="/admin/analytics" className="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors">
+                    analytics
+                  </Link>
+                </>
               )}
               <span className="text-xs font-mono text-gray-500">
                 {user.isGuest ? "guest" : user.username}
@@ -64,6 +70,7 @@ export default function App() {
             <Route path="/snippets/:id/edit" element={<EditSnippetPage />} />
             <Route path="/snippets/:id/live" element={<LivePage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           </Route>
         </Routes>
       </AuthProvider>

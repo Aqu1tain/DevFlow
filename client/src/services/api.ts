@@ -41,6 +41,11 @@ export interface AdminSnippet extends Omit<Snippet, "userId"> {
   userId: { _id: string; username: string };
 }
 
+export interface AdminStats {
+  snippets: { total: number; public: number; unlisted: number; private: number; languages: { name: string; count: number }[] };
+  users: { total: number; free: number; pro: number };
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -139,8 +144,10 @@ function post<T>(path: string, body?: object) {
 }
 
 export const adminApi = {
+  getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: () => request<AdminSnippet[]>("/admin/snippets"),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
+
 };
 
 export const authApi = {
