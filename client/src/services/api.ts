@@ -108,7 +108,6 @@ function post<T>(path: string, body?: object) {
 export const adminApi = {
   getSnippets: () => request<AdminSnippet[]>("/admin/snippets"),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
-  deleteComment: (id: string) => request<{ message: string }>(`/admin/comments/${id}`, { method: "DELETE" }),
 };
 
 export const authApi = {
