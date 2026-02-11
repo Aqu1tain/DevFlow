@@ -27,6 +27,8 @@ export default function RegisterPage() {
     navigate("/snippets");
   };
 
+  const apiUrl = import.meta.env.VITE_API_URL || "/api";
+
   const inputClass =
     "w-full bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors";
 
@@ -98,6 +100,22 @@ export default function RegisterPage() {
               {loading ? "creating account..." : "create account"}
             </Button>
           </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/[0.06]" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-[#0a0a0f] px-3 text-[11px] text-gray-600 font-mono">or</span>
+            </div>
+          </div>
+
+          <a
+            href={`${apiUrl}/auth/github`}
+            className="block w-full text-center cursor-pointer text-xs font-mono rounded-none transition-colors text-gray-400 hover:text-white border border-white/[0.08] hover:border-white/20 px-4 py-2.5"
+          >
+            continue with github
+          </a>
         </div>
 
         <p className="text-center text-xs text-gray-600">

@@ -9,6 +9,7 @@ export interface IUser extends Document {
   email?: string;
   password?: string;
   username: string;
+  githubId?: string;
   isGuest: boolean;
   guestSessionId?: string;
   guestExpiresAt?: Date;
@@ -56,6 +57,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: () => `user_${Date.now()}`,
     },
+    githubId: { type: String, sparse: true, default: null },
     isGuest: { type: Boolean, default: false },
     guestSessionId: { type: String, sparse: true, default: null },
     guestExpiresAt: { type: Date, default: null },

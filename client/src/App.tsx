@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import GitHubCallbackPage from "./pages/GitHubCallbackPage";
 import SnippetsPage from "./pages/SnippetsPage";
 import CreateSnippetPage from "./pages/CreateSnippetPage";
 import EditSnippetPage from "./pages/EditSnippetPage";
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/snippets" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/callback" element={<GitHubCallbackPage />} />
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/snippets" element={<SnippetsPage />} />
             <Route path="/snippets/new" element={<CreateSnippetPage />} />
