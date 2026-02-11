@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi, type Comment } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,8 @@ import { parseCitations } from "../components/CommentBody";
 import CodeViewer, { type EditorInstance, type LineComment } from "../components/CodeViewer";
 import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
+import SnapshotPanel from "../components/SnapshotPanel";
+import useSnapshots from "../hooks/useSnapshots";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -38,8 +40,10 @@ export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { snippet, loading, error } = useSnippet(id);
+  const { snippet, setSnippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
+  const { snapshots, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
+  const [showHistory, setShowHistory] = useState(false);
   const citeRef = useRef<((citation: string) => void) | null>(null);
   const editorInstanceRef = useRef<EditorInstance | null>(null);
 
@@ -68,6 +72,11 @@ export default function ViewSnippetPage() {
     if (el) flashElement(el);
   };
 
+  const handleRestore = async (snapshotId: string) => {
+    const updated = await restoreSnapshot(snapshotId);
+    if (updated) setSnippet(updated);
+  };
+
   const handleDelete = async () => {
     if (!id) return;
     await snippetsApi.delete(id);
@@ -94,6 +103,11 @@ export default function ViewSnippetPage() {
               </Link>
             )}
             {isOwner && (
+              <Button variant="ghost" onClick={() => setShowHistory(!showHistory)} className="px-3 py-1.5">
+                History
+              </Button>
+            )}
+            {isOwner && (
               <Button variant="danger" onClick={handleDelete} className="px-3 py-1.5">
                 Delete
               </Button>
@@ -118,6 +132,17 @@ export default function ViewSnippetPage() {
           )}
         </div>
       </div>
+
+      {showHistory && (
+        <SnapshotPanel
+          snapshots={snapshots}
+          currentCode={snippet.code}
+          currentLanguage={snippet.language}
+          onCreate={createSnapshot}
+          onRestore={handleRestore}
+          onDelete={deleteSnapshot}
+        />
+      )}
 
       <CodeViewer
         code={snippet.code}
