@@ -5,11 +5,12 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 const prompts: Record<string, string> = {
   explain:
-    "You are a code tutor. Explain the following code clearly and concisely. " +
-    "Break down what each part does. Use plain language a junior dev would understand.",
+    "Explain the following code. Break down what each part does. " +
+    "Be clear and concise. No preamble, no meta-commentary — just the explanation.",
   correct:
-    "You are a code reviewer. Analyze the following code for bugs, bad practices, and improvements. " +
-    "Show the corrected version with brief explanations of what you changed and why.",
+    "Review the following code for bugs, bad practices, and possible improvements. " +
+    "Show the corrected version with brief explanations of each change. " +
+    "No preamble, no meta-commentary — get straight to the point.",
 };
 
 export async function stream(code: string, language: string, action: string) {

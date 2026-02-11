@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import Markdown from "react-markdown";
 import type { AIAction } from "../services/api";
 
 interface Props {
@@ -10,10 +11,10 @@ interface Props {
 }
 
 export default function AIPanel({ content, action, loading, error, onClear }: Props) {
-  const preRef = useRef<HTMLPreElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (preRef.current) preRef.current.scrollTop = preRef.current.scrollHeight;
+    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
   }, [content]);
 
   return (
@@ -29,15 +30,17 @@ export default function AIPanel({ content, action, loading, error, onClear }: Pr
           clear
         </button>
       </div>
-      <pre
-        ref={preRef}
-        className="p-3 text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-96 overflow-y-auto text-gray-300"
+      <div
+        ref={bodyRef}
+        className="p-3 max-h-96 overflow-y-auto text-xs text-gray-300 ai-markdown"
       >
         {error
           ? <span className="text-red-400">{error}</span>
-          : content || <span className="text-gray-600">Waiting for response...</span>}
+          : content
+            ? <Markdown>{content}</Markdown>
+            : <span className="text-gray-600">Waiting for response...</span>}
         {loading && <span className="inline-block w-1.5 h-3.5 bg-emerald-400 ml-0.5 animate-pulse align-middle" />}
-      </pre>
+      </div>
     </div>
   );
 }
