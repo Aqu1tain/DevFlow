@@ -1,32 +1,14 @@
-import mongoose from "mongoose";
 import { Request, Response } from "express";
 import * as commentService from "../services/commentService";
+import { handle } from "../lib/handle";
 
-type Handler = (req: Request<{ id: string; commentId?: string }>, res: Response) => Promise<void>;
+type Params = { id: string; commentId?: string };
 
-const isCastError = (err: unknown) =>
-  err instanceof mongoose.Error.CastError;
-
-const isValidationError = (err: unknown) =>
-  err instanceof mongoose.Error.ValidationError;
-
-const handle =
-  (fn: Handler): Handler =>
-  async (req, res) => {
-    try {
-      await fn(req, res);
-    } catch (err) {
-      if (isCastError(err)) return void res.status(400).json({ error: "Invalid ID format" });
-      if (isValidationError(err)) return void res.status(400).json({ error: (err as mongoose.Error.ValidationError).message });
-      res.status(500).json({ error: "Internal server error" });
-    }
-  };
-
-export const getAll = handle(async (req, res) => {
+export const getAll = handle<Params>(async (req, res) => {
   res.json(await commentService.findBySnippetId(req.params.id));
 });
 
-export const create = handle(async (req, res) => {
+export const create = handle<Params>(async (req, res) => {
   if (req.snippet!.visibility === "private") {
     return void res.status(403).json({ error: "Cannot comment on private snippets" });
   }
@@ -42,7 +24,7 @@ export const create = handle(async (req, res) => {
   }));
 });
 
-export const remove = handle(async (req, res) => {
+export const remove = handle<Params>(async (req, res) => {
   const comment = await commentService.findById(req.params.commentId!);
   if (!comment) return void res.status(404).json({ error: "Comment not found" });
 

@@ -106,6 +106,39 @@ export const commentsApi = {
     }),
 };
 
+export interface Snapshot {
+  _id: string;
+  snippetId: string;
+  userId: string;
+  name: string;
+  title: string;
+  language: string;
+  description: string;
+  code: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export const snapshotsApi = {
+  getAll: (snippetId: string) =>
+    request<Snapshot[]>(`/snippets/${snippetId}/snapshots`),
+  getById: (snippetId: string, snapshotId: string) =>
+    request<Snapshot>(`/snippets/${snippetId}/snapshots/${snapshotId}`),
+  create: (snippetId: string, name: string) =>
+    request<Snapshot>(`/snippets/${snippetId}/snapshots`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  restore: (snippetId: string, snapshotId: string) =>
+    request<Snippet>(`/snippets/${snippetId}/snapshots/${snapshotId}/restore`, {
+      method: "POST",
+    }),
+  delete: (snippetId: string, snapshotId: string) =>
+    request<{ message: string }>(`/snippets/${snippetId}/snapshots/${snapshotId}`, {
+      method: "DELETE",
+    }),
+};
+
 function post<T>(path: string, body?: object) {
   return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
 }
