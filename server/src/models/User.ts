@@ -40,7 +40,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       validate: {
         validator(this: IUser, v: string) {
-          if (this.userType === "guest") return true;
+          if (this.userType === "guest" || this.githubId) return true;
           return /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(v);
         },
         message: "Invalid email",
