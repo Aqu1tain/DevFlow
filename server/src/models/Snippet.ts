@@ -27,4 +27,7 @@ const snippetSchema = new Schema<ISnippet>(
   { timestamps: true }
 );
 
+snippetSchema.index({ visibility: 1, createdAt: -1 });
+snippetSchema.index({ userId: 1, createdAt: -1 });
+
 export default mongoose.model<ISnippet>("Snippet", snippetSchema);

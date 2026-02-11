@@ -6,6 +6,7 @@ export const findPublicAndOwn = async (userId?: string, page = 1) => {
     : { visibility: "public" };
   const [data, total] = await Promise.all([
     Snippet.find(filter)
+      .select("title language description tags visibility createdAt")
       .sort({ createdAt: -1 })
       .skip((page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
