@@ -7,6 +7,9 @@ export const findPublicAndOwn = (userId?: string) => {
   return Snippet.find(filter).sort({ createdAt: -1 }).exec();
 };
 
+export const findAll = () =>
+  Snippet.find().sort({ createdAt: -1 }).populate("userId", "username").exec();
+
 export const findById = (id: string) =>
   Snippet.findById(id).exec();
 
