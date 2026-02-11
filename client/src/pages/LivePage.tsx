@@ -7,6 +7,8 @@ import useSnippet from "../hooks/useSnippet";
 import { snippetsApi } from "../services/api";
 import Button, { buttonClass } from "../components/Button";
 import { baseOptions } from "../components/CodeViewer";
+import OutputPanel from "../components/OutputPanel";
+import useExecution, { canRun } from "../hooks/useExecution";
 
 export default function LivePage() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +17,7 @@ export default function LivePage() {
   const bindingRef = useRef<MonacoBinding | null>(null);
   const [editor, setEditor] = useState<Parameters<OnMount>[0] | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const { output, running, duration, run, clear } = useExecution();
   const [copied, setCopied] = useState(false);
 
   const readOnly = mode === "visible" && !isHost;
@@ -156,6 +159,8 @@ export default function LivePage() {
         </div>
       )}
 
+      {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {users.map((u) => (
@@ -167,6 +172,19 @@ export default function LivePage() {
         <div className="flex items-center gap-3">
           {saveStatus === "saved" && (
             <span className="text-[11px] font-mono text-emerald-400 animate-pulse">saved</span>
+          )}
+          {canRun(snippet.language) && (
+            <Button
+              variant="accent"
+              className="px-4 py-1.5"
+              onClick={() => {
+                if (!doc) return;
+                run(doc.getText("code").toString(), snippet.language);
+              }}
+              disabled={running}
+            >
+              {running ? "Running..." : "Run"}
+            </Button>
           )}
           <Button variant="accent" className="px-4 py-1.5" onClick={handleSave} disabled={saveStatus === "saving"}>
             {saveStatus === "saving" ? "Saving..." : "Save"}
