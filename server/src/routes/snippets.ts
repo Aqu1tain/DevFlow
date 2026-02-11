@@ -3,6 +3,7 @@ import * as snippetController from "../controllers/snippetController";
 import { authenticate, optionalAuth } from "../middlewares/auth";
 import { checkSnippetAccess } from "../middlewares/visibility";
 import commentRoutes from "./comments";
+import snapshotRoutes from "./snapshots";
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.put("/:id", authenticate, checkSnippetAccess, snippetController.update);
 router.delete("/:id", authenticate, checkSnippetAccess, snippetController.remove);
 
 router.use("/:id/comments", commentRoutes);
+router.use("/:id/snapshots", snapshotRoutes);
 
 export default router;

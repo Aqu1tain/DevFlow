@@ -15,5 +15,5 @@ export default function useSnippet(id: string | undefined) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  return { snippet, loading, error };
+  return { snippet, setSnippet, loading, error };
 }
