@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Request, Response } from "express";
 import * as snippetService from "../services/snippetService";
 import * as commentService from "../services/commentService";
+import * as snapshotService from "../services/snapshotService";
 
 type Handler = (req: Request<{ id: string }>, res: Response) => Promise<void>;
 
@@ -71,5 +72,6 @@ export const remove = handle(async (req, res) => {
   const snippet = await snippetService.remove(req.params.id);
   if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
   await commentService.removeBySnippetId(req.params.id);
+  await snapshotService.removeBySnippetId(req.params.id);
   res.json({ message: "Snippet deleted" });
 });
