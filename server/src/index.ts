@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import { socketAuth } from "./socket/auth";
 import { registerLiveSession } from "./socket/liveSession";
+import { connectRedis } from "./lib/redis";
 
 dotenv.config();
 
@@ -35,6 +36,10 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
+
+connectRedis()
+  .then(() => console.log("Connected to Redis"))
+  .catch((err) => console.error("Redis connection error:", err));
 
 io.use(socketAuth);
 
