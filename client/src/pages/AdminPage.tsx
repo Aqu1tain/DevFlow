@@ -38,16 +38,27 @@ function SnippetRow({ snippet, onDelete }: { snippet: AdminSnippet; onDelete: (i
 export default function AdminPage() {
   const { user } = useAuth();
   const [snippets, setSnippets] = useState<AdminSnippet[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadPage = (p: number) => {
+    setLoading(true);
     adminApi
-      .getSnippets()
-      .then(setSnippets)
+      .getSnippets(p)
+      .then(({ data, total, pages }) => {
+        setSnippets(data);
+        setTotal(total);
+        setPages(pages);
+        setPage(p);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { loadPage(1); }, []);
 
   if (user?.role !== "admin") return <Navigate to="/snippets" replace />;
 
@@ -56,6 +67,7 @@ export default function AdminPage() {
     try {
       await adminApi.deleteSnippet(id);
       setSnippets((prev) => prev.filter((s) => s._id !== id));
+      setTotal((prev) => prev - 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete snippet");
     }
@@ -68,7 +80,7 @@ export default function AdminPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-lg font-mono font-medium">admin</h1>
-        <p className="text-xs text-gray-500 mt-1 font-mono">{snippets.length} snippets total</p>
+        <p className="text-xs text-gray-500 mt-1 font-mono">{total.toLocaleString()} snippets total</p>
       </div>
 
       {snippets.length === 0 ? (
@@ -78,6 +90,28 @@ export default function AdminPage() {
           {snippets.map((s) => (
             <SnippetRow key={s._id} snippet={s} onDelete={deleteSnippet} />
           ))}
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.06]">
+          <button
+            onClick={() => loadPage(page - 1)}
+            disabled={page <= 1}
+            className="text-xs font-mono text-gray-500 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            ← prev
+          </button>
+          <span className="text-xs font-mono text-gray-600">
+            {page} / {pages.toLocaleString()}
+          </span>
+          <button
+            onClick={() => loadPage(page + 1)}
+            disabled={page >= pages}
+            className="text-xs font-mono text-gray-500 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            next →
+          </button>
         </div>
       )}
     </div>

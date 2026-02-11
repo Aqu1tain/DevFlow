@@ -4,6 +4,8 @@ import type { SnippetInput, Visibility } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
+import OutputPanel from "./OutputPanel";
+import useExecution, { canRun } from "../hooks/useExecution";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
 const MIN_LINES = 12;
@@ -30,6 +32,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [code, setCode] = useState(initial?.code ?? "");
   const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? "public");
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
+  const { output, running, duration, run, clear } = useExecution();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +144,8 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
         />
       </div>
 
+      {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
+
       <div className="sticky bottom-0 bg-[#0a0a0f] border-t border-white/[0.06] -mx-5 px-5 py-3 flex items-center justify-between gap-4">
         <input
           className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-none px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
@@ -151,6 +156,17 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
         <div className="flex items-center gap-3 shrink-0">
           {saveStatus === "saved" && (
             <span className="text-[11px] font-mono text-emerald-400 animate-pulse">saved</span>
+          )}
+          {canRun(language) && (
+            <Button
+              type="button"
+              variant="accent"
+              className="px-4 py-2"
+              onClick={() => run(code, language)}
+              disabled={running}
+            >
+              {running ? "Running..." : "Run"}
+            </Button>
           )}
           <Button type="submit" className="px-5 py-2">
             {submitLabel}
