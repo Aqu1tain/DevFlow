@@ -1,10 +1,18 @@
 import Snippet from "../models/Snippet";
 
-export const findPublicAndOwn = (userId?: string) => {
+export const findPublicAndOwn = async (userId?: string, page = 1) => {
   const filter = userId
     ? { $or: [{ visibility: "public" }, { userId }] }
     : { visibility: "public" };
-  return Snippet.find(filter).sort({ createdAt: -1 }).exec();
+  const [data, total] = await Promise.all([
+    Snippet.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .exec(),
+    Snippet.countDocuments(filter),
+  ]);
+  return { data, total, pages: Math.ceil(total / PAGE_SIZE) };
 };
 
 const PAGE_SIZE = 50;

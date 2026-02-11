@@ -72,8 +72,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export interface SnippetsPage {
+  data: Snippet[];
+  total: number;
+  pages: number;
+}
+
 export const snippetsApi = {
-  getAll: () => request<Snippet[]>("/snippets"),
+  getAll: (page = 1) => request<SnippetsPage>(`/snippets?page=${page}`),
   getById: (id: string) => request<Snippet>(`/snippets/${id}`),
   create: (data: SnippetInput) =>
     request<Snippet>("/snippets", {

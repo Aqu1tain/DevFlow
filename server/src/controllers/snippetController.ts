@@ -7,7 +7,8 @@ import { handle } from "../lib/handle";
 type Params = { id: string };
 
 export const getAll = handle<Params>(async (req, res) => {
-  res.json(await snippetService.findPublicAndOwn(req.userId));
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  res.json(await snippetService.findPublicAndOwn(req.userId, page));
 });
 
 export const getById = handle<Params>(async (req, res) => {
