@@ -7,10 +7,10 @@ export default function GitHubCallbackPage() {
   const { loginWithToken } = useAuth();
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token");
-    const error = new URLSearchParams(window.location.search).get("error");
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
 
-    if (error || !token) {
+    if (!token || params.get("error")) {
       navigate("/login?error=github_auth_failed");
       return;
     }

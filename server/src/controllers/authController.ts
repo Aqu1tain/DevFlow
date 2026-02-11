@@ -111,10 +111,12 @@ export const me = handle(async (req, res) => {
   res.json({ user: sanitize(req.user!) });
 });
 
-const GITHUB_OAUTH_URL = "https://github.com/login/oauth/authorize";
-const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
-const GITHUB_USER_URL = "https://api.github.com/user";
-const GITHUB_EMAILS_URL = "https://api.github.com/user/emails";
+const GITHUB = {
+  authorize: "https://github.com/login/oauth/authorize",
+  token: "https://github.com/login/oauth/access_token",
+  user: "https://api.github.com/user",
+  emails: "https://api.github.com/user/emails",
+};
 
 export const githubRedirect = (_req: Request, res: Response) => {
   const params = new URLSearchParams({
@@ -122,11 +124,11 @@ export const githubRedirect = (_req: Request, res: Response) => {
     redirect_uri: `${process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`}/api/auth/github/callback`,
     scope: "user:email",
   });
-  res.redirect(`${GITHUB_OAUTH_URL}?${params}`);
+  res.redirect(`${GITHUB.authorize}?${params}`);
 };
 
 const getGitHubAccessToken = async (code: string): Promise<string> => {
-  const res = await fetch(GITHUB_TOKEN_URL, {
+  const res = await fetch(GITHUB.token, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
@@ -140,19 +142,21 @@ const getGitHubAccessToken = async (code: string): Promise<string> => {
   return data.access_token;
 };
 
-const getGitHubUser = async (accessToken: string): Promise<{ githubUser: GitHubUser; email: string | null }> => {
-  const headers = { Authorization: `Bearer ${accessToken}`, "User-Agent": "DevFlow" };
+const githubHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  "User-Agent": "DevFlow",
+});
 
-  const [userRes, emailsRes] = await Promise.all([
-    fetch(GITHUB_USER_URL, { headers }),
-    fetch(GITHUB_EMAILS_URL, { headers }),
-  ]);
+const getPrimaryEmail = (emails: GitHubEmail[]): string | null =>
+  (Array.isArray(emails) ? emails.find((e) => e.primary && e.verified)?.email : null) ?? null;
+
+const getGitHubUser = async (accessToken: string): Promise<{ githubUser: GitHubUser; email: string | null }> => {
+  const headers = githubHeaders(accessToken);
+  const [userRes, emailsRes] = await Promise.all([fetch(GITHUB.user, { headers }), fetch(GITHUB.emails, { headers })]);
 
   const githubUser = await userRes.json() as GitHubUser;
   const emails = await emailsRes.json() as GitHubEmail[];
-
-  const primary = Array.isArray(emails) ? emails.find((e) => e.primary && e.verified) : null;
-  const email = githubUser.email || primary?.email || null;
+  const email = githubUser.email ?? getPrimaryEmail(emails);
 
   return { githubUser, email };
 };
