@@ -2,15 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 
 const LINE_HEIGHT = 20;
-const PADDING = 24;
 const PADDING_TOP = 12;
+const PADDING_BOTTOM = 12;
+const PADDING = PADDING_TOP + PADDING_BOTTOM;
 
 const baseOptions = {
   minimap: { enabled: false },
   fontSize: 13,
   lineHeight: LINE_HEIGHT,
   scrollBeyondLastLine: false,
-  padding: { top: PADDING_TOP, bottom: 12 },
+  padding: { top: PADDING_TOP, bottom: PADDING_BOTTOM },
   renderLineHighlight: "none" as const,
   overviewRulerLanes: 0,
   hideCursorInOverviewRuler: true,
