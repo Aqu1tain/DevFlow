@@ -34,8 +34,9 @@ router.get("/stats", handle(async (_req, res) => {
   res.json(stats);
 }));
 
-router.get("/snippets", handle(async (_req, res) => {
-  res.json(await snippetService.findAll());
+router.get("/snippets", handle(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  res.json(await snippetService.findAll(page));
 }));
 
 router.delete("/snippets/:id", handle<{ id: string }>(async (req, res) => {

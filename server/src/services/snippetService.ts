@@ -7,8 +7,20 @@ export const findPublicAndOwn = (userId?: string) => {
   return Snippet.find(filter).sort({ createdAt: -1 }).exec();
 };
 
-export const findAll = () =>
-  Snippet.find().sort({ createdAt: -1 }).populate("userId", "username").exec();
+const PAGE_SIZE = 50;
+
+export const findAll = async (page: number) => {
+  const [data, total] = await Promise.all([
+    Snippet.find()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .populate("userId", "username")
+      .exec(),
+    Snippet.countDocuments(),
+  ]);
+  return { data, total, pages: Math.ceil(total / PAGE_SIZE) };
+};
 
 export const findById = (id: string) =>
   Snippet.findById(id).exec();
