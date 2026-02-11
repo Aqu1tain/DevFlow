@@ -1,39 +1,48 @@
 services:
   mongodb:
     image: mongo:7
-    ports:
-      - "27017:27017"
     volumes:
       - mongo-data:/data/db
     environment:
       MONGO_INITDB_DATABASE: devflow
+    healthcheck:
+      test: mongosh --eval "db.runCommand('ping').ok" --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   server:
     build: ./server
-    ports:
-      - "3001:3001"
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ./server/.env
     environment:
+      PORT: 3001
       MONGODB_URI: mongodb://mongodb:27017/devflow
       REDIS_URL: redis://redis:6379
+      CLIENT_URL: http://localhost
 
   client:
     build: ./client
     ports:
-      - "5173:5173"
+      - "80:80"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
 
 volumes:
   mongo-data:
