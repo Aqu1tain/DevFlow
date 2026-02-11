@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { authApi, setToken, getToken, clearToken, type User } from "../services/api";
 
 interface AuthState {
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginAsGuest = () => handleAuth(() => authApi.guest());
 
-  const loginWithToken = async (token: string) => {
+  const loginWithToken = useCallback(async (token: string) => {
     setToken(token);
     try {
       const { user } = await authApi.me();
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearToken();
       return err instanceof Error ? err.message : "Authentication failed";
     }
-  };
+  }, []);
 
   const logout = () => {
     clearToken();
