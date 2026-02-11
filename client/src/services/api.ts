@@ -150,6 +150,20 @@ export const adminApi = {
 
 };
 
+export interface ExecutionResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+}
+
+export const executionApi = {
+  run: (code: string, language: string) =>
+    request<ExecutionResult>("/execute", {
+      method: "POST",
+      body: JSON.stringify({ code, language }),
+    }),
+};
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),

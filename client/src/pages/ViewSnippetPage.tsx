@@ -10,6 +10,8 @@ import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import SnapshotPanel from "../components/SnapshotPanel";
 import useSnapshots from "../hooks/useSnapshots";
+import useExecution, { canRun } from "../hooks/useExecution";
+import OutputPanel from "../components/OutputPanel";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -43,6 +45,7 @@ export default function ViewSnippetPage() {
   const { snippet, setSnippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
   const { snapshots, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
+  const { output, running, duration, run, clear } = useExecution();
   const [showHistory, setShowHistory] = useState(false);
   const citeRef = useRef<((citation: string) => void) | null>(null);
   const editorInstanceRef = useRef<EditorInstance | null>(null);
@@ -94,6 +97,16 @@ export default function ViewSnippetPage() {
             )}
           </div>
           <div className="flex gap-2 shrink-0 ml-4">
+            {user && canRun(snippet.language) && (
+              <Button
+                variant="accent"
+                className="px-3 py-1.5"
+                onClick={() => run(snippet.code, snippet.language)}
+                disabled={running}
+              >
+                {running ? "Running..." : "Run"}
+              </Button>
+            )}
             <Link to={`/snippets/${id}/live`} className={buttonClass("accent", "px-3 py-1.5")}>
               Go Live
             </Link>
@@ -152,6 +165,8 @@ export default function ViewSnippetPage() {
         editorInstanceRef={editorInstanceRef}
         onCommentClick={scrollToComment}
       />
+
+      {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
 
       <Comments
         visibility={snippet.visibility}
