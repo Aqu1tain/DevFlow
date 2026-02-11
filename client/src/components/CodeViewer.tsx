@@ -18,8 +18,19 @@ const baseOptions = {
 };
 
 export function editorHeight(code: string, minLines = 1) {
-  const lines = Math.max(code.split("\n").length, minLines);
-  return lines * LINE_HEIGHT + PADDING;
+  return Math.max(code.split("\n").length, minLines) * LINE_HEIGHT + PADDING;
+}
+
+function lineTop(line: number) {
+  return 1 + PADDING_TOP + (line - 1) * LINE_HEIGHT;
+}
+
+function plural(count: number, word: string) {
+  return `${count} ${word}${count > 1 ? "s" : ""}`;
+}
+
+function stripCitations(text: string) {
+  return text.replace(/@L\d+(-\d+)?/g, "").trim() || "line citation";
 }
 
 export type EditorInstance = Parameters<OnMount>[0];
@@ -39,18 +50,20 @@ interface Props {
   onCommentClick?: (commentId: string) => void;
 }
 
-const CommentBubble = ({ count }: { count: number }) => (
-  <span className="relative inline-flex items-center justify-center w-5 h-5">
-    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5">
-      <path fill="rgba(16,185,129,0.5)" d="M1 2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6l-4 3.5V11H2a1 1 0 0 1-1-1V2z" />
-    </svg>
-    {count > 1 && (
-      <span className="absolute -top-1 -right-1 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/20 rounded-full w-3.5 h-3.5 flex items-center justify-center">
-        {count}
-      </span>
-    )}
-  </span>
-);
+function CommentBubble({ count }: { count: number }) {
+  return (
+    <span className="relative inline-flex items-center justify-center w-5 h-5">
+      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5">
+        <path fill="rgba(16,185,129,0.5)" d="M1 2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6l-4 3.5V11H2a1 1 0 0 1-1-1V2z" />
+      </svg>
+      {count > 1 && (
+        <span className="absolute -top-1 -right-1 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/20 rounded-full w-3.5 h-3.5 flex items-center justify-center">
+          {count}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export default function CodeViewer({ code, language, onCite, lineComments, editorInstanceRef, onCommentClick }: Props) {
   const editorRef = useRef<EditorInstance | null>(null);
@@ -70,10 +83,8 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
       run: (ed) => {
         const sel = ed.getSelection();
         if (!sel) return;
-        const startLine = sel.startLineNumber;
-        const endLine = sel.endLineNumber;
-        const citation = startLine === endLine ? `@L${startLine}` : `@L${startLine}-${endLine}`;
-        onCite(citation);
+        const { startLineNumber: start, endLineNumber: end } = sel;
+        onCite(start === end ? `@L${start}` : `@L${start}-${end}`);
       },
     });
   };
@@ -82,7 +93,7 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
     const editor = editorRef.current;
     if (!editor) return;
 
-    if (!lineComments || lineComments.size === 0) {
+    if (!lineComments?.size) {
       decorationsRef.current = editor.deltaDecorations(decorationsRef.current, []);
       return;
     }
@@ -97,18 +108,17 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
 
   useEffect(() => {
     if (popoverLine === null) return;
-    const handle = (e: MouseEvent) => {
-      const el = document.querySelector(".line-comments-popover");
-      if (el && el.contains(e.target as Node)) return;
+    const close = (e: MouseEvent) => {
+      const popover = document.querySelector(".line-comments-popover");
+      if (popover?.contains(e.target as Node)) return;
       setPopoverLine(null);
     };
-    requestAnimationFrame(() => document.addEventListener("mousedown", handle));
-    return () => document.removeEventListener("mousedown", handle);
+    requestAnimationFrame(() => document.addEventListener("mousedown", close));
+    return () => document.removeEventListener("mousedown", close);
   }, [popoverLine]);
 
-  const hasGlyph = lineComments && lineComments.size > 0;
+  const hasComments = lineComments && lineComments.size > 0;
   const popoverComments = popoverLine !== null ? lineComments?.get(popoverLine) : null;
-  const popoverTop = popoverLine !== null ? PADDING_TOP + (popoverLine - 1) * LINE_HEIGHT : 0;
 
   return (
     <div className="relative overflow-visible">
@@ -118,20 +128,20 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
           language={language}
           theme="vs-dark"
           value={code}
-          options={{ ...baseOptions, readOnly: true, glyphMargin: !!hasGlyph }}
+          options={{ ...baseOptions, readOnly: true, glyphMargin: !!hasComments }}
           onMount={handleMount}
         />
       </div>
 
-      {hasGlyph && (
+      {hasComments && (
         <div className="absolute left-0 top-0 z-[5] pointer-events-none">
           {[...lineComments!.entries()].map(([line, comments]) => (
             <button
               key={line}
               className="absolute left-1.5 pointer-events-auto cursor-pointer hover:scale-110 transition-transform"
-              style={{ top: 1 + PADDING_TOP + (line - 1) * LINE_HEIGHT }}
-              onClick={() => setPopoverLine((prev) => (prev === line ? null : line))}
-              title={`${comments.length} comment${comments.length > 1 ? "s" : ""}`}
+              style={{ top: lineTop(line) }}
+              onClick={() => setPopoverLine(prev => prev === line ? null : line)}
+              title={plural(comments.length, "comment")}
             >
               <CommentBubble count={comments.length} />
             </button>
@@ -142,24 +152,19 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
       {popoverLine !== null && popoverComments && (
         <div
           className="line-comments-popover absolute z-10 w-72 border border-white/[0.08] bg-[#0a0a0f] shadow-2xl"
-          style={{ top: 1 + popoverTop, left: 44 }}
+          style={{ top: lineTop(popoverLine), left: 44 }}
         >
           <div className="px-3 py-1.5 border-b border-white/[0.06] text-[10px] font-mono text-gray-500 lowercase">
-            {popoverComments.length} comment{popoverComments.length > 1 ? "s" : ""} on line {popoverLine}
+            {plural(popoverComments.length, "comment")} on line {popoverLine}
           </div>
           {popoverComments.map((c) => (
             <button
               key={c.commentId}
-              onClick={() => {
-                setPopoverLine(null);
-                onCommentClick?.(c.commentId);
-              }}
+              onClick={() => { setPopoverLine(null); onCommentClick?.(c.commentId); }}
               className="w-full text-left px-3 py-2 hover:bg-white/[0.04] border-b border-white/[0.04] last:border-0 cursor-pointer transition-colors"
             >
               <span className="text-[11px] font-mono text-emerald-400">{c.username}</span>
-              <p className="text-xs text-gray-400 mt-0.5 truncate">
-                {c.body.replace(/@L\d+(-\d+)?/g, "").trim() || "line citation"}
-              </p>
+              <p className="text-xs text-gray-400 mt-0.5 truncate">{stripCitations(c.body)}</p>
             </button>
           ))}
         </div>

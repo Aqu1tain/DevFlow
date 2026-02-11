@@ -2,22 +2,26 @@ type Segment =
   | { type: "text"; value: string }
   | { type: "cite"; startLine: number; endLine: number; raw: string };
 
-export const CITE_RE = /@L(\d+)(?:-(\d+))?/g;
+const CITE_RE = /@L(\d+)(?:-(\d+))?/g;
 
-function parseBody(body: string): Segment[] {
+export function parseCitations(text: string): Segment[] {
   const segments: Segment[] = [];
-  let lastIndex = 0;
+  let last = 0;
 
-  for (const match of body.matchAll(CITE_RE)) {
-    if (match.index > lastIndex) segments.push({ type: "text", value: body.slice(lastIndex, match.index) });
+  for (const match of text.matchAll(CITE_RE)) {
+    if (match.index > last) segments.push({ type: "text", value: text.slice(last, match.index) });
     const start = parseInt(match[1]);
     const end = match[2] ? parseInt(match[2]) : start;
     segments.push({ type: "cite", startLine: start, endLine: Math.max(start, end), raw: match[0] });
-    lastIndex = match.index + match[0].length;
+    last = match.index + match[0].length;
   }
 
-  if (lastIndex < body.length) segments.push({ type: "text", value: body.slice(lastIndex) });
+  if (last < text.length) segments.push({ type: "text", value: text.slice(last) });
   return segments;
+}
+
+export function hasCitations(text: string) {
+  return /@L\d+/.test(text);
 }
 
 interface Props {
@@ -28,18 +32,16 @@ interface Props {
 }
 
 export default function CommentBody({ body, code, stale, onCiteClick }: Props) {
-  const segments = parseBody(body);
   const totalLines = code.split("\n").length;
 
   return (
     <p className="text-sm text-gray-300 whitespace-pre-wrap">
-      {segments.map((seg, i) => {
+      {parseCitations(body).map((seg, i) => {
         if (seg.type === "text") return <span key={i}>{seg.value}</span>;
 
         const { startLine, endLine, raw } = seg;
-        const inRange = startLine >= 1 && endLine <= totalLines;
 
-        if (!inRange)
+        if (startLine < 1 || endLine > totalLines)
           return (
             <code key={i} className="text-xs font-mono text-gray-500 bg-white/[0.04] px-1 py-0.5">
               {raw}

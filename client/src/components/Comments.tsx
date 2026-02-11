@@ -1,26 +1,17 @@
 import { type MutableRefObject, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
-import CommentBody, { CITE_RE } from "./CommentBody";
+import CommentBody, { parseCitations, hasCitations } from "./CommentBody";
 import type { Comment, Visibility } from "../services/api";
 
 function HighlightedOverlay({ text }: { text: string }) {
-  const parts: { text: string; isCite: boolean }[] = [];
-  let last = 0;
-  for (const m of text.matchAll(new RegExp(CITE_RE.source, "g"))) {
-    if (m.index > last) parts.push({ text: text.slice(last, m.index), isCite: false });
-    parts.push({ text: m[0], isCite: true });
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push({ text: text.slice(last), isCite: false });
-
   return (
     <div aria-hidden className="absolute inset-0 px-3 py-2 text-sm whitespace-pre-wrap break-words pointer-events-none">
-      {parts.map((p, i) =>
-        p.isCite ? (
-          <mark key={i} className="bg-emerald-500/15 text-emerald-400 rounded-sm px-0.5">{p.text}</mark>
+      {parseCitations(text).map((seg, i) =>
+        seg.type === "cite" ? (
+          <mark key={i} className="bg-emerald-500/15 text-emerald-400 rounded-sm px-0.5">{seg.raw}</mark>
         ) : (
-          <span key={i} className="text-gray-300">{p.text}</span>
+          <span key={i} className="text-gray-300">{seg.value}</span>
         ),
       )}
     </div>
@@ -34,12 +25,10 @@ function timeAgo(date: string) {
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 interface Props {
-  snippetId: string;
   visibility: Visibility;
   code: string;
   citeRef?: MutableRefObject<((citation: string) => void) | null>;
@@ -93,6 +82,9 @@ export default function Comments({ visibility, code, citeRef, comments, comments
   const canDelete = (authorId: string) =>
     user && (user.id === authorId || user.role === "admin");
 
+  const isStale = (comment: Comment) =>
+    hasCitations(comment.body) && new Date(snippetUpdatedAt) > new Date(comment.createdAt);
+
   return (
     <div className="mt-8">
       <h2 className="text-sm font-mono lowercase text-gray-400 mb-4">
@@ -125,8 +117,7 @@ export default function Comments({ visibility, code, citeRef, comments, comments
 
       <div className="space-y-3">
         {comments.map((comment) => {
-          const hasCitations = new RegExp(CITE_RE.source).test(comment.body);
-          const stale = hasCitations && new Date(snippetUpdatedAt) > new Date(comment.createdAt);
+          const stale = isStale(comment);
           return (
             <div
               key={comment._id}

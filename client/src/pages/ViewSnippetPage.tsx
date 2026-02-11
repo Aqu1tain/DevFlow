@@ -1,14 +1,38 @@
 import { useMemo, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { snippetsApi } from "../services/api";
+import { snippetsApi, type Comment } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
 import useComments from "../hooks/useComments";
-import { CITE_RE } from "../components/CommentBody";
+import { parseCitations } from "../components/CommentBody";
 import CodeViewer, { type EditorInstance, type LineComment } from "../components/CodeViewer";
 import Comments from "../components/Comments";
 import Button, { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
+
+function buildLineComments(comments: Comment[], totalLines: number) {
+  const map = new Map<number, LineComment[]>();
+
+  for (const c of comments) {
+    const entry: LineComment = { commentId: c._id, username: c.userId.username, body: c.body };
+    for (const seg of parseCitations(c.body)) {
+      if (seg.type !== "cite") continue;
+      for (let line = seg.startLine; line <= seg.endLine; line++) {
+        if (line < 1 || line > totalLines) continue;
+        const existing = map.get(line) || [];
+        if (!existing.some(e => e.commentId === c._id)) map.set(line, [...existing, entry]);
+      }
+    }
+  }
+
+  return map;
+}
+
+function flashElement(el: HTMLElement) {
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.add("comment-flash");
+  el.addEventListener("animationend", () => el.classList.remove("comment-flash"), { once: true });
+}
 
 export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,21 +45,7 @@ export default function ViewSnippetPage() {
 
   const lineComments = useMemo(() => {
     if (!snippet) return new Map<number, LineComment[]>();
-    const totalLines = snippet.code.split("\n").length;
-    const map = new Map<number, LineComment[]>();
-    for (const c of comments) {
-      for (const m of c.body.matchAll(new RegExp(CITE_RE.source, "g"))) {
-        const start = parseInt(m[1]);
-        const end = m[2] ? parseInt(m[2]) : start;
-        const entry: LineComment = { commentId: c._id, username: c.userId.username, body: c.body };
-        for (let i = start; i <= end; i++) {
-          if (i < 1 || i > totalLines) continue;
-          const existing = map.get(i) || [];
-          if (!existing.some((e) => e.commentId === entry.commentId)) map.set(i, [...existing, entry]);
-        }
-      }
-    }
-    return map;
+    return buildLineComments(comments, snippet.code.split("\n").length);
   }, [comments, snippet]);
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
@@ -55,10 +65,7 @@ export default function ViewSnippetPage() {
 
   const scrollToComment = (commentId: string) => {
     const el = document.getElementById(`comment-${commentId}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.add("comment-flash");
-    el.addEventListener("animationend", () => el.classList.remove("comment-flash"), { once: true });
+    if (el) flashElement(el);
   };
 
   const handleDelete = async () => {
@@ -122,7 +129,6 @@ export default function ViewSnippetPage() {
       />
 
       <Comments
-        snippetId={snippet._id}
         visibility={snippet.visibility}
         code={snippet.code}
         citeRef={citeRef}
