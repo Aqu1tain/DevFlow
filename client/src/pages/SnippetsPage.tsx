@@ -6,19 +6,29 @@ import { visibilityStyle } from "../lib/visibility";
 
 export default function SnippetsPage() {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadPage = (p: number) => {
+    setLoading(true);
     snippetsApi
-      .getAll()
-      .then(setSnippets)
+      .getAll(p)
+      .then(({ data, total, pages }) => {
+        setSnippets(data);
+        setTotal(total);
+        setPages(pages);
+        setPage(p);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
-  if (loading)
-    return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
+  useEffect(() => { loadPage(1); }, []);
+
+  if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
   if (error) return <p className="text-sm text-red-400">{error}</p>;
 
   return (
@@ -52,9 +62,7 @@ export default function SnippetsPage() {
                 <h2 className="text-sm font-mono font-medium text-gray-200 group-hover:text-white transition-colors">
                   {s.title}
                 </h2>
-                <span className="text-[11px] text-gray-500 font-mono">
-                  {s.language}
-                </span>
+                <span className="text-[11px] text-gray-500 font-mono">{s.language}</span>
                 {s.visibility !== "public" && (
                   <span className={`text-[10px] font-mono ${visibilityStyle[s.visibility].color}`}>
                     {s.visibility}
@@ -62,17 +70,12 @@ export default function SnippetsPage() {
                 )}
               </div>
               {s.description && (
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                  {s.description}
-                </p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{s.description}</p>
               )}
               {s.tags.length > 0 && (
                 <div className="flex gap-1.5 mt-2">
                   {s.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5"
-                    >
+                    <span key={tag} className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5">
                       {tag}
                     </span>
                   ))}
@@ -80,6 +83,28 @@ export default function SnippetsPage() {
               )}
             </Link>
           ))}
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between mt-8 pt-4 border-t border-white/[0.06]">
+          <button
+            onClick={() => loadPage(page - 1)}
+            disabled={page <= 1}
+            className="text-xs font-mono text-gray-500 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            ← prev
+          </button>
+          <span className="text-xs font-mono text-gray-600">
+            {page} / {pages.toLocaleString()} — {total.toLocaleString()} snippets
+          </span>
+          <button
+            onClick={() => loadPage(page + 1)}
+            disabled={page >= pages}
+            className="text-xs font-mono text-gray-500 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            next →
+          </button>
         </div>
       )}
     </div>

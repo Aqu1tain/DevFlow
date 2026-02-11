@@ -7,7 +7,8 @@ import { handle } from "../lib/handle";
 type Params = { id: string };
 
 export const getAll = handle<Params>(async (req, res) => {
-  res.json(await snippetService.findPublicAndOwn(req.userId));
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  res.json(await snippetService.findPublicAndOwn(req.userId, page));
 });
 
 export const getById = handle<Params>(async (req, res) => {
@@ -53,7 +54,9 @@ export const remove = handle<Params>(async (req, res) => {
 
   const snippet = await snippetService.remove(req.params.id);
   if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
-  await commentService.removeBySnippetId(req.params.id);
-  await snapshotService.removeBySnippetId(req.params.id);
+  await Promise.all([
+    commentService.removeBySnippetId(req.params.id),
+    snapshotService.removeBySnippetId(req.params.id),
+  ]);
   res.json({ message: "Snippet deleted" });
 });

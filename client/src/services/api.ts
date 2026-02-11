@@ -41,6 +41,12 @@ export interface AdminSnippet extends Omit<Snippet, "userId"> {
   userId: { _id: string; username: string };
 }
 
+export interface AdminSnippetsPage {
+  data: AdminSnippet[];
+  total: number;
+  pages: number;
+}
+
 export interface AdminStats {
   snippets: { total: number; public: number; unlisted: number; private: number; languages: { name: string; count: number }[] };
   users: { total: number; free: number; pro: number };
@@ -66,8 +72,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export interface SnippetsPage {
+  data: Snippet[];
+  total: number;
+  pages: number;
+}
+
 export const snippetsApi = {
-  getAll: () => request<Snippet[]>("/snippets"),
+  getAll: (page = 1) => request<SnippetsPage>(`/snippets?page=${page}`),
   getById: (id: string) => request<Snippet>(`/snippets/${id}`),
   create: (data: SnippetInput) =>
     request<Snippet>("/snippets", {
@@ -145,7 +157,7 @@ function post<T>(path: string, body?: object) {
 
 export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
-  getSnippets: () => request<AdminSnippet[]>("/admin/snippets"),
+  getSnippets: (page = 1) => request<AdminSnippetsPage>(`/admin/snippets?page=${page}`),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
 
 };
