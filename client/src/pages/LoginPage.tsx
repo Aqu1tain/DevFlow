@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Button, { buttonClass } from "../components/Button";
 import { API_BASE } from "../services/api";
+import GitHubIcon from "../components/GitHubIcon";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -77,13 +78,16 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <a href={`${API_BASE}/auth/github`} className={buttonClass("ghost", "block w-full text-center px-4 py-2.5")}>
-            continue with github
-          </a>
+          <div className="space-y-2.5">
+            <a href={`${API_BASE}/auth/github`} className={buttonClass("ghost", "flex items-center justify-center gap-2 w-full px-4 py-2.5")}>
+              <GitHubIcon className="w-4 h-4" />
+              continue with github
+            </a>
 
-          <Button variant="ghost" onClick={() => submit(loginAsGuest)} disabled={loading} className="w-full px-4 py-2.5">
-            continue as guest
-          </Button>
+            <Button variant="ghost" onClick={() => submit(loginAsGuest)} disabled={loading} className="w-full px-4 py-2.5">
+              continue as guest
+            </Button>
+          </div>
         </div>
 
         <p className="text-center text-xs text-gray-600">

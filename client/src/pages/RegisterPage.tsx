@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Button, { buttonClass } from "../components/Button";
+import GitHubIcon from "../components/GitHubIcon";
 import { API_BASE } from "../services/api";
 
 export default function RegisterPage() {
@@ -109,7 +110,8 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <a href={`${API_BASE}/auth/github`} className={buttonClass("ghost", "block w-full text-center px-4 py-2.5")}>
+          <a href={`${API_BASE}/auth/github`} className={buttonClass("ghost", "flex items-center justify-center gap-2 w-full px-4 py-2.5")}>
+            <GitHubIcon className="w-4 h-4" />
             continue with github
           </a>
         </div>
