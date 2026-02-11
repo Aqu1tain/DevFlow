@@ -7,10 +7,8 @@ export const run = handle(async (req, res) => {
   if (!code?.trim()) return void res.status(400).json({ error: "Code is required" });
 
   try {
-    const result = await executionService.execute(language, code);
-    res.json(result);
+    res.json(await executionService.execute(language, code));
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Execution failed";
-    res.status(502).json({ error: message });
+    res.status(502).json({ error: err instanceof Error ? err.message : "Execution failed" });
   }
 });

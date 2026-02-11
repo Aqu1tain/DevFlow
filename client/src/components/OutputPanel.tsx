@@ -19,7 +19,7 @@ export default function OutputPanel({ output, duration, onClear }: Props) {
                 : "text-rose-400 bg-rose-500/10"
             }`}
           >
-            exit {output.exitCode}
+            {output.exitCode === null ? "killed" : `exit ${output.exitCode}`}
           </span>
           <span className="text-[11px] font-mono text-gray-600">
             {duration >= 1000 ? `${(duration / 1000).toFixed(1)}s` : `${duration}ms`}

@@ -153,7 +153,7 @@ export const adminApi = {
 export interface ExecutionResult {
   stdout: string;
   stderr: string;
-  exitCode: number;
+  exitCode: number | null;
 }
 
 export const executionApi = {
