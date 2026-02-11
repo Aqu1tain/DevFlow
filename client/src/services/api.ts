@@ -37,6 +37,10 @@ export interface Snippet {
 
 export type SnippetInput = Omit<Snippet, "_id" | "createdAt" | "updatedAt" | "userId">;
 
+export interface AdminSnippet extends Omit<Snippet, "userId"> {
+  userId: { _id: string; username: string };
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -100,6 +104,12 @@ export const commentsApi = {
 function post<T>(path: string, body?: object) {
   return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
 }
+
+export const adminApi = {
+  getSnippets: () => request<AdminSnippet[]>("/admin/snippets"),
+  deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
+  deleteComment: (id: string) => request<{ message: string }>(`/admin/comments/${id}`, { method: "DELETE" }),
+};
 
 export const authApi = {
   register: (email: string, password: string, username: string) =>
