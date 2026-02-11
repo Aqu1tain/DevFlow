@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import { authenticate, requireAdmin } from "../middlewares/auth";
 import * as snippetService from "../services/snippetService";
 import * as commentService from "../services/commentService";
@@ -7,34 +7,32 @@ const router = Router();
 
 router.use(authenticate, requireAdmin);
 
-router.get("/snippets", async (_req, res) => {
-  try {
-    res.json(await snippetService.findAll());
-  } catch {
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+type Handler = (req: Request<{ id: string }>, res: Response) => Promise<void>;
 
-router.delete("/snippets/:id", async (req, res) => {
+const handle = (fn: Handler): Handler => async (req, res) => {
   try {
-    const snippet = await snippetService.remove(req.params.id);
-    if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
-    await commentService.removeBySnippetId(req.params.id);
-    res.json({ message: "Snippet deleted" });
+    await fn(req, res);
   } catch {
     res.status(500).json({ error: "Internal server error" });
   }
-});
+};
 
-router.delete("/comments/:id", async (req, res) => {
-  try {
-    const comment = await commentService.findById(req.params.id);
-    if (!comment) return void res.status(404).json({ error: "Comment not found" });
-    await commentService.remove(req.params.id);
-    res.json({ message: "Comment deleted" });
-  } catch {
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get("/snippets", handle(async (_req, res) => {
+  res.json(await snippetService.findAll());
+}));
+
+router.delete("/snippets/:id", handle(async (req, res) => {
+  const snippet = await snippetService.remove(req.params.id);
+  if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
+  await commentService.removeBySnippetId(req.params.id);
+  res.json({ message: "Snippet deleted" });
+}));
+
+router.delete("/comments/:id", handle(async (req, res) => {
+  const comment = await commentService.findById(req.params.id);
+  if (!comment) return void res.status(404).json({ error: "Comment not found" });
+  await commentService.remove(req.params.id);
+  res.json({ message: "Comment deleted" });
+}));
 
 export default router;
