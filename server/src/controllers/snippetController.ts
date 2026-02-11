@@ -54,7 +54,9 @@ export const remove = handle<Params>(async (req, res) => {
 
   const snippet = await snippetService.remove(req.params.id);
   if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
-  await commentService.removeBySnippetId(req.params.id);
-  await snapshotService.removeBySnippetId(req.params.id);
+  await Promise.all([
+    commentService.removeBySnippetId(req.params.id),
+    snapshotService.removeBySnippetId(req.params.id),
+  ]);
   res.json({ message: "Snippet deleted" });
 });

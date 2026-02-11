@@ -1,7 +1,7 @@
 import Snapshot from "../models/Snapshot";
 
 export const findBySnippetId = (snippetId: string) =>
-  Snapshot.find({ snippetId }).sort({ createdAt: -1 }).exec();
+  Snapshot.find({ snippetId }).sort({ createdAt: -1 }).lean().exec();
 
 export const findById = (id: string) =>
   Snapshot.findById(id).exec();

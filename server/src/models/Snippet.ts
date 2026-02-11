@@ -27,6 +27,7 @@ const snippetSchema = new Schema<ISnippet>(
   { timestamps: true }
 );
 
+snippetSchema.index({ createdAt: -1 });
 snippetSchema.index({ visibility: 1, createdAt: -1 });
 snippetSchema.index({ userId: 1, createdAt: -1 });
 
