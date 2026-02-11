@@ -2,6 +2,8 @@ import { Request, Response, Router } from "express";
 import { authenticate, requireAdmin } from "../middlewares/auth";
 import * as snippetService from "../services/snippetService";
 import * as commentService from "../services/commentService";
+import * as snapshotService from "../services/snapshotService";
+import * as userService from "../services/userService";
 
 const router = Router();
 
@@ -18,6 +20,11 @@ const handle =
     }
   };
 
+router.get("/stats", handle(async (_req, res) => {
+  const [snippets, users] = await Promise.all([snippetService.getStats(), userService.getStats()]);
+  res.json({ snippets, users });
+}));
+
 router.get("/snippets", handle(async (_req, res) => {
   res.json(await snippetService.findAll());
 }));
@@ -26,6 +33,7 @@ router.delete("/snippets/:id", handle<{ id: string }>(async (req, res) => {
   const snippet = await snippetService.remove(req.params.id);
   if (!snippet) return void res.status(404).json({ error: "Snippet not found" });
   await commentService.removeBySnippetId(req.params.id);
+  await snapshotService.removeBySnippetId(req.params.id);
   res.json({ message: "Snippet deleted" });
 }));
 
