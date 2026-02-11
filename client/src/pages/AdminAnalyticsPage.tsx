@@ -24,9 +24,9 @@ function BarChart({ items, total }: { items: BarChartItem[]; total: number }) {
             <span>{label}</span>
             <span>{value} ({Math.round((value / total) * 100)}%)</span>
           </div>
-          <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/[0.06] overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${color}`}
+              className={`h-full transition-all ${color}`}
               style={{ width: `${(value / total) * 100}%` }}
             />
           </div>
@@ -39,7 +39,7 @@ function BarChart({ items, total }: { items: BarChartItem[]; total: number }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-4">{title}</h2>
+      <h2 className="text-sm font-mono lowercase text-gray-400 mb-4">{title}</h2>
       {children}
     </div>
   );

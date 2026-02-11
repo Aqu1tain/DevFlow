@@ -114,7 +114,7 @@ export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: () => request<AdminSnippet[]>("/admin/snippets"),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
-  deleteComment: (id: string) => request<{ message: string }>(`/admin/comments/${id}`, { method: "DELETE" }),
+
 };
 
 export const authApi = {
