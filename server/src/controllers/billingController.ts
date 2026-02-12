@@ -44,11 +44,10 @@ const getOrCreateCustomer = async (user: IUser): Promise<string> => {
   if (user.stripeCustomerId) return user.stripeCustomerId;
 
   const stripe = getStripe();
-  const customer = await stripe.customers.create({
-    email: user.email,
-    metadata: { userId: String(user._id) },
-    idempotency_key: `customer-${String(user._id)}`,
-  } as Stripe.CustomerCreateParams & { idempotency_key: string });
+  const customer = await stripe.customers.create(
+    { email: user.email, metadata: { userId: String(user._id) } },
+    { idempotencyKey: `customer-${String(user._id)}` },
+  );
 
   const updated = await User.findOneAndUpdate(
     { _id: user._id, stripeCustomerId: null },
