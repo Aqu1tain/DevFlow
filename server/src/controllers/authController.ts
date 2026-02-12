@@ -38,6 +38,10 @@ const handle =
 const fail = (message: string, status = 400) =>
   Object.assign(new Error(message), { status });
 
+const cleanCode = (code: string) => code.replace(/\s/g, "");
+
+const findUserWithSecret = (id: string) => User.findById(id).select("+totpSecret");
+
 const sanitize = (user: IUser) => ({
   id: user._id,
   email: user.email,
@@ -104,7 +108,7 @@ export const verifyTotp = handle(async (req, res) => {
   const user = await User.findById(payload.userId).select("+totpSecret");
   if (!user || !user.totpEnabled || !user.totpSecret) throw fail("2FA not configured", 401);
 
-  if (!totp.verify(code.replace(/\s/g, ""), user.totpSecret))
+  if (!totp.verify(cleanCode(code), user.totpSecret))
     throw fail("Invalid code", 401);
 
   user.lastLoginAt = new Date();
@@ -124,10 +128,10 @@ export const enableTotp = handle(async (req, res) => {
   const { secret, code } = req.body;
   if (!secret || !code) throw fail("Missing secret or code");
 
-  if (!totp.verify(code.replace(/\s/g, ""), secret))
+  if (!totp.verify(cleanCode(code), secret))
     throw fail("Invalid code", 400);
 
-  const user = await User.findById(req.userId).select("+totpSecret");
+  const user = await findUserWithSecret(req.userId!);
   if (!user) throw fail("User not found", 404);
 
   user.totpSecret = secret;
@@ -141,10 +145,10 @@ export const disableTotp = handle(async (req, res) => {
   const { code } = req.body;
   if (!code) throw fail("Missing code");
 
-  const user = await User.findById(req.userId).select("+totpSecret");
+  const user = await findUserWithSecret(req.userId!);
   if (!user?.totpEnabled || !user.totpSecret) throw fail("2FA is not enabled");
 
-  if (!totp.verify(code.replace(/\s/g, ""), user.totpSecret))
+  if (!totp.verify(cleanCode(code), user.totpSecret))
     throw fail("Invalid code", 401);
 
   user.totpSecret = undefined;

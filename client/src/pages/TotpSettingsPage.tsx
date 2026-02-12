@@ -14,7 +14,6 @@ export default function TotpSettingsPage() {
   const [secret, setSecret] = useState("");
   const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
-  const [disableCode, setDisableCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,53 +22,59 @@ export default function TotpSettingsPage() {
 
   const totpEnabled = user!.totpEnabled;
 
-  const startSetup = async () => {
+  const run = async (fn: () => Promise<void>) => {
     setError("");
     setLoading(true);
     try {
-      const res = await authApi.setupTotp();
-      setSecret(res.secret);
-      setUri(res.uri);
-      setStep("setup");
+      await fn();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start setup");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const enable = async (e: React.FormEvent) => {
+  const startSetup = () => run(async () => {
+    const res = await authApi.setupTotp();
+    setSecret(res.secret);
+    setUri(res.uri);
+    setStep("setup");
+  });
+
+  const enable = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
+    run(async () => {
       await authApi.enableTotp(secret, code);
       await refreshUser();
       setSuccess("2FA enabled. Use your authenticator app for future logins.");
       setStep("idle");
       setCode("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to enable 2FA");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
-  const disable = async (e: React.FormEvent) => {
+  const disable = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await authApi.disableTotp(disableCode);
+    run(async () => {
+      await authApi.disableTotp(code);
       await refreshUser();
       setSuccess("2FA disabled.");
-      setDisableCode("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to disable 2FA");
-    } finally {
-      setLoading(false);
-    }
+      setCode("");
+    });
   };
+
+  const codeInput = (
+    <input
+      type="text"
+      inputMode="numeric"
+      autoComplete="one-time-code"
+      required
+      autoFocus
+      value={code}
+      onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+      className={inputClass}
+      placeholder="000000"
+    />
+  );
 
   return (
     <div className="max-w-sm space-y-8">
@@ -111,17 +116,7 @@ export default function TotpSettingsPage() {
           <form onSubmit={enable} className="space-y-4">
             <div>
               <label className="block text-xs font-mono text-gray-400 mb-1.5">enter the 6-digit code to confirm</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                required
-                autoFocus
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className={inputClass}
-                placeholder="000000"
-              />
+              {codeInput}
             </div>
             <div className="flex gap-3">
               <Button type="submit" disabled={loading || code.length !== 6} className="px-4 py-2.5">
@@ -144,18 +139,9 @@ export default function TotpSettingsPage() {
         <form onSubmit={disable} className="space-y-4">
           <div>
             <label className="block text-xs font-mono text-gray-400 mb-1.5">enter your current code to disable 2FA</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              required
-              value={disableCode}
-              onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              className={inputClass}
-              placeholder="000000"
-            />
+            {codeInput}
           </div>
-          <Button type="submit" variant="danger" disabled={loading || disableCode.length !== 6} className="px-4 py-2.5">
+          <Button type="submit" variant="danger" disabled={loading || code.length !== 6} className="px-4 py-2.5">
             {loading ? "disabling..." : "disable 2FA"}
           </Button>
         </form>

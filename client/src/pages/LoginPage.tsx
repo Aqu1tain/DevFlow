@@ -17,35 +17,21 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const submit = async (action: () => Promise<string | null>) => {
+    setLoading(true);
+    setError("");
+    const err = await action();
+    if (err) { setError(err); setLoading(false); return; }
+    navigate(from, { replace: true });
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     const res = await login(email, password);
-    if (res && typeof res === "object") {
-      setTempToken(res.tempToken);
-      setLoading(false);
-      return;
-    }
+    if (res && typeof res === "object") { setTempToken(res.tempToken); setLoading(false); return; }
     if (res) { setError(res); setLoading(false); return; }
-    navigate(from, { replace: true });
-  };
-
-  const handleTotpVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!tempToken) return;
-    setLoading(true);
-    setError("");
-    const err = await verifyTotp(tempToken, totpCode);
-    if (err) { setError(err); setLoading(false); return; }
-    navigate(from, { replace: true });
-  };
-
-  const handleGuest = async () => {
-    setLoading(true);
-    setError("");
-    const err = await loginAsGuest();
-    if (err) { setError(err); setLoading(false); return; }
     navigate(from, { replace: true });
   };
 
@@ -55,7 +41,7 @@ export default function LoginPage() {
         {error && (
           <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2">{error}</p>
         )}
-        <form onSubmit={handleTotpVerify} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); submit(() => verifyTotp(tempToken!, totpCode)); }} className="space-y-4">
           <div>
             <label className="block text-xs font-mono text-gray-400 mb-1.5">authenticator code</label>
             <input
@@ -123,7 +109,7 @@ export default function LoginPage() {
 
       <div className="space-y-2.5">
         <GitHubButton redirectTo={from} />
-        <Button variant="ghost" onClick={handleGuest} disabled={loading} className="w-full px-4 py-2.5">
+        <Button variant="ghost" onClick={() => submit(loginAsGuest)} disabled={loading} className="w-full px-4 py-2.5">
           continue as guest
         </Button>
       </div>

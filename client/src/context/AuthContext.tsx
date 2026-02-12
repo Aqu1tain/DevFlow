@@ -63,13 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyTotp = (tempToken: string, code: string) =>
     handleAuth(() => authApi.verifyTotp(tempToken, code));
 
+  const hydrateUser = async () => {
+    const { user } = await authApi.me();
+    setUser(user);
+  };
+
   const refreshUser = async () => {
-    try {
-      const { user } = await authApi.me();
-      setUser(user);
-    } catch {
-      // silent — token may have expired
-    }
+    try { await hydrateUser(); } catch {}
   };
 
   const register = (email: string, password: string, username: string) =>
@@ -80,8 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = useCallback(async (token: string) => {
     setToken(token);
     try {
-      const { user } = await authApi.me();
-      setUser(user);
+      await hydrateUser();
       return null;
     } catch (err) {
       clearToken();

@@ -22,18 +22,21 @@ export default function GitHubCallbackPage() {
       return;
     }
 
-    if (tempToken) {
-      const redirect = sessionStorage.getItem("auth_redirect") ?? "/snippets";
+    const consumeRedirect = () => {
+      const to = sessionStorage.getItem("auth_redirect") ?? "/snippets";
       sessionStorage.removeItem("auth_redirect");
+      return to;
+    };
+
+    if (tempToken) {
+      const redirect = consumeRedirect();
       navigate("/login", { replace: true, state: { tempToken, from: { pathname: redirect } } });
       return;
     }
 
-    loginWithToken(token!).then((err) => {
-      const redirect = sessionStorage.getItem("auth_redirect") ?? "/snippets";
-      sessionStorage.removeItem("auth_redirect");
-      navigate(err ? "/login" : redirect, { replace: true });
-    });
+    loginWithToken(token!).then((err) =>
+      navigate(err ? "/login" : consumeRedirect(), { replace: true }),
+    );
   }, [navigate, loginWithToken]);
 
   return (
