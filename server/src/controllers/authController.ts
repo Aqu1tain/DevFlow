@@ -196,7 +196,7 @@ const GITHUB = {
 };
 
 const STATE_TTL = 10 * 60 * 1000;
-const HMAC_SECRET = process.env.JWT_SECRET!;
+const HMAC_SECRET = process.env.JWT_SECRET ?? "dev_secret";
 
 const hmac = (data: string) =>
   crypto.createHmac("sha256", HMAC_SECRET).update(data).digest("hex").slice(0, 16);
