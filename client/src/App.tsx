@@ -13,6 +13,7 @@ import LivePage from "./pages/LivePage";
 import AdminPage from "./pages/AdminPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -77,6 +78,8 @@ export default function App() {
             <Route path="/snippets/:id/live" element={<LivePage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/2fa" element={<Navigate to="/settings" replace />} />
           </Route>

@@ -221,6 +221,29 @@ export const billingApi = {
   portal: () => post<{ url: string }>("/billing/portal"),
 };
 
+export interface ProfileBadge {
+  id: string;
+  name: string;
+  description: string;
+  unlocked: boolean;
+  progress?: { current: number; target: number };
+}
+
+export interface ProfileData {
+  user: { username: string; userType: string; createdAt: string };
+  stats: { snippets: number; comments: number; snapshots: number; languages: string[] };
+  heatmap: Record<string, number>;
+  badges: ProfileBadge[];
+  streaks: { current: number; longest: number };
+}
+
+export const profileApi = {
+  get: (username: string, year?: number) =>
+    request<ProfileData>(`/profile/${username}${year ? `?year=${year}` : ""}`),
+  update: (data: { username: string }) =>
+    request<{ username: string }>("/profile", { method: "PUT", body: JSON.stringify(data) }),
+};
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),

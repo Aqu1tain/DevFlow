@@ -11,6 +11,7 @@ import executionRoutes from "./routes/execution";
 import aiRoutes from "./routes/ai";
 import billingRoutes from "./routes/billing";
 import { handleWebhook, validateStripeEnv } from "./controllers/billingController";
+import profileRoutes from "./routes/profile";
 import { socketAuth } from "./socket/auth";
 import { registerLiveSession } from "./socket/liveSession";
 import { connectRedis } from "./lib/redis";
@@ -38,6 +39,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/execute", executionRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/profile", profileRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
