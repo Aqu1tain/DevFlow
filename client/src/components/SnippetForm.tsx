@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput, Visibility } from "../services/api";
-import { billingApi } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
-import { isPro as checkPro, isStripeUrl } from "../lib/user";
+import { isPro as checkPro } from "../lib/user";
 import Button from "./Button";
 import OutputPanel from "./OutputPanel";
 import UpgradeModal from "./UpgradeModal";
 import useExecution, { canRun } from "../hooks/useExecution";
+import useUpgrade from "../hooks/useUpgrade";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
 const MIN_LINES = 12;
@@ -40,9 +40,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const { output, running, duration, run, clear } = useExecution();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
-  const [showUpgrade, setShowUpgrade] = useState((location.state as { upgrade?: boolean })?.upgrade ?? false);
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState("");
+  const upgrade = useUpgrade((location.state as { upgrade?: boolean })?.upgrade ?? false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
@@ -94,19 +92,6 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
     }
   };
 
-  const handleUpgrade = async () => {
-    setUpgradeError("");
-    setUpgrading(true);
-    try {
-      const { url } = await billingApi.checkout();
-      if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
-      window.location.href = url;
-    } catch (err) {
-      setUpgradeError(err instanceof Error ? err.message : "Something went wrong");
-      setUpgrading(false);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(getData());
@@ -116,12 +101,12 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
 
   return (
     <>
-    {showUpgrade && (
+    {upgrade.open && (
       <UpgradeModal
-        onUpgrade={handleUpgrade}
-        onClose={() => setShowUpgrade(false)}
-        loading={upgrading}
-        error={upgradeError}
+        onUpgrade={upgrade.checkout}
+        onClose={() => upgrade.setOpen(false)}
+        loading={upgrade.loading}
+        error={upgrade.error}
       />
     )}
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,12 +125,8 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
             onChange={(e) => {
               const v = e.target.value;
               if (v === "private" && !isPro) {
-                if (user?.isGuest) {
-                  navigate("/register", { state: { from: location.pathname, upgrade: true } });
-                  return;
-                }
-                setShowUpgrade(true);
-                return;
+                if (user?.isGuest) return navigate("/register", { state: { from: location.pathname, upgrade: true } });
+                return upgrade.setOpen(true);
               }
               setVisibility(v as Visibility);
             }}

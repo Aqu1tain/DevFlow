@@ -48,11 +48,11 @@ export default function SnippetsPage() {
   return (
     <div>
       {!isPro && !user?.isGuest && !bannerDismissed && (
-        <div className="flex items-center justify-between mb-6 px-4 py-3 border border-amber-500/20 bg-amber-500/5">
-          <p className="text-xs font-mono text-amber-400/80">keep your code private with Pro</p>
+        <div className="flex items-center justify-between mb-6 px-4 py-3 border border-emerald-500/20 bg-emerald-500/5">
+          <p className="text-xs font-mono text-gray-400">keep your code private with Pro</p>
           <div className="flex items-center gap-4">
-            <Link to="/settings" className="text-xs font-mono text-amber-400 hover:text-amber-300 transition-colors">
-              upgrade →
+            <Link to="/settings" className="text-xs font-mono text-emerald-400 hover:text-emerald-300 transition-colors">
+              upgrade
             </Link>
             <button onClick={dismissBanner} className="text-xs font-mono text-gray-600 hover:text-gray-400 transition-colors">
               ✕

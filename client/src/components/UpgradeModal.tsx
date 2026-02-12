@@ -5,9 +5,15 @@ interface Props {
   onClose: () => void;
   loading: boolean;
   error?: string;
+  reason?: "private" | "ai";
 }
 
-export default function UpgradeModal({ onUpgrade, onClose, loading, error }: Props) {
+const SUBTITLES: Record<string, string> = {
+  private: "unlock private snippets",
+  ai: "unlock AI-powered code tools",
+};
+
+export default function UpgradeModal({ onUpgrade, onClose, loading, error, reason = "private" }: Props) {
   return (
     <div
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
@@ -19,7 +25,7 @@ export default function UpgradeModal({ onUpgrade, onClose, loading, error }: Pro
       >
         <div>
           <p className="text-sm font-mono font-medium text-gray-200">upgrade to Pro</p>
-          <p className="text-xs text-gray-500 mt-1 font-mono">unlock private snippets</p>
+          <p className="text-xs text-gray-500 mt-1 font-mono">{SUBTITLES[reason]}</p>
         </div>
 
         <ul className="space-y-2">

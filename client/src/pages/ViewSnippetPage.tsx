@@ -15,8 +15,8 @@ import OutputPanel from "../components/OutputPanel";
 import useAI from "../hooks/useAI";
 import AIPanel from "../components/AIPanel";
 import UpgradeModal from "../components/UpgradeModal";
-import { billingApi } from "../services/api";
-import { isPro as checkPro, isStripeUrl } from "../lib/user";
+import useUpgrade from "../hooks/useUpgrade";
+import { isPro as checkPro } from "../lib/user";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -49,9 +49,7 @@ export default function ViewSnippetPage() {
   const location = useLocation();
   const { user } = useAuth();
   const isPro = checkPro(user);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState("");
+  const upgrade = useUpgrade();
   const { snippet, setSnippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
   const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
@@ -97,39 +95,21 @@ export default function ViewSnippetPage() {
     navigate("/snippets");
   };
 
-  const handleUpgrade = async () => {
-    setUpgradeError("");
-    setUpgrading(true);
-    try {
-      const { url } = await billingApi.checkout();
-      if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
-      window.location.href = url;
-    } catch (err) {
-      setUpgradeError(err instanceof Error ? err.message : "Something went wrong");
-      setUpgrading(false);
-    }
-  };
-
   const handleAI = (action: "explain" | "correct") => {
-    if (user?.isGuest) {
-      navigate("/register", { state: { from: location.pathname, upgrade: true } });
-      return;
-    }
-    if (!isPro) {
-      setShowUpgrade(true);
-      return;
-    }
+    if (user?.isGuest) return navigate("/register", { state: { from: location.pathname, upgrade: true } });
+    if (!isPro) return upgrade.setOpen(true);
     ai.ask(snippet!.code, snippet!.language, action);
   };
 
   return (
     <>
-    {showUpgrade && (
+    {upgrade.open && (
       <UpgradeModal
-        onUpgrade={handleUpgrade}
-        onClose={() => setShowUpgrade(false)}
-        loading={upgrading}
-        error={upgradeError}
+        onUpgrade={upgrade.checkout}
+        onClose={() => upgrade.setOpen(false)}
+        loading={upgrade.loading}
+        error={upgrade.error}
+        reason="ai"
       />
     )}
     <div>
@@ -219,7 +199,7 @@ export default function ViewSnippetPage() {
           )}
           <Button
             variant="ghost"
-            className="px-3 py-1.5"
+            className={`px-3 py-1.5 ${isPro ? "" : "opacity-50"}`}
             onClick={() => handleAI("explain")}
             disabled={ai.loading}
           >
@@ -227,7 +207,7 @@ export default function ViewSnippetPage() {
           </Button>
           <Button
             variant="ghost"
-            className="px-3 py-1.5"
+            className={`px-3 py-1.5 ${isPro ? "" : "opacity-50"}`}
             onClick={() => handleAI("correct")}
             disabled={ai.loading}
           >

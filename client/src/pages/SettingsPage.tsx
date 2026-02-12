@@ -205,7 +205,7 @@ function BillingSection() {
       ) : (
         <div className="space-y-3">
           <p className="text-xs font-mono text-gray-500">upgrade to Pro to unlock private snippets</p>
-          <Button onClick={upgrade} disabled={loading} className="px-4 py-2.5">
+          <Button onClick={upgrade} disabled={loading} variant="accent" className="px-4 py-2.5">
             {loading ? "loading..." : "upgrade to Pro"}
           </Button>
         </div>
