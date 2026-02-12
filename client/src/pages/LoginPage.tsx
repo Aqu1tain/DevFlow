@@ -17,8 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/snippets";
-
   const submit = async (action: () => Promise<string | null>) => {
     setLoading(true);
     setError("");
