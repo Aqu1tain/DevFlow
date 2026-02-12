@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { authenticate, requireAdmin } from "../middlewares/auth";
+import { authenticate, requireAdmin, requireAdminTotp } from "../middlewares/auth";
 import * as snippetService from "../services/snippetService";
 import * as commentService from "../services/commentService";
 import * as snapshotService from "../services/snapshotService";
@@ -11,7 +11,7 @@ const STATS_TTL = 60;
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireAdmin, requireAdminTotp);
 
 const handle =
   <P = object>(fn: (req: Request<P>, res: Response) => Promise<void>) =>

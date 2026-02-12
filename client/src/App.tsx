@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UserDropdown from "./components/UserDropdown";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import GitHubCallbackPage from "./pages/GitHubCallbackPage";
@@ -11,6 +12,7 @@ import ViewSnippetPage from "./pages/ViewSnippetPage";
 import LivePage from "./pages/LivePage";
 import AdminPage from "./pages/AdminPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -34,15 +36,19 @@ function AppLayout() {
                   </Link>
                 </>
               )}
-              <span className="text-xs font-mono text-gray-500">
-                {user.isGuest ? "guest" : user.username}
-              </span>
-              <button
-                onClick={logout}
-                className="cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                logout
-              </button>
+              {user.isGuest ? (
+                <>
+                  <span className="text-xs font-mono text-gray-500">guest</span>
+                  <button
+                    onClick={logout}
+                    className="cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    logout
+                  </button>
+                </>
+              ) : (
+                <UserDropdown username={user.username} onLogout={logout} />
+              )}
             </div>
           )}
         </div>
@@ -71,6 +77,8 @@ export default function App() {
             <Route path="/snippets/:id/live" element={<LivePage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/2fa" element={<Navigate to="/settings" replace />} />
           </Route>
         </Routes>
       </AuthProvider>

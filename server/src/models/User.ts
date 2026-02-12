@@ -14,6 +14,8 @@ export interface IUser extends Document {
   guestSessionId?: string;
   guestExpiresAt?: Date;
   role: Role;
+  totpSecret?: string;
+  totpEnabled: boolean;
   lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -62,6 +64,8 @@ const userSchema = new Schema<IUser>(
     guestSessionId: { type: String, sparse: true, default: null },
     guestExpiresAt: { type: Date, default: null },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    totpSecret: { type: String, select: false },
+    totpEnabled: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: Date.now },
   },
   { timestamps: true },
