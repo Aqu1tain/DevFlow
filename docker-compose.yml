@@ -35,6 +35,7 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/devflow
       REDIS_URL: redis://redis:6379
       CLIENT_URL: http://localhost
+      SERVER_URL: http://localhost
 
   stripe:
     image: stripe/stripe-cli:latest
