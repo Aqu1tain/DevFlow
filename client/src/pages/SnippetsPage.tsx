@@ -4,16 +4,27 @@ import { snippetsApi, type Snippet } from "../services/api";
 import { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
 import { useAuth } from "../context/AuthContext";
+import { isPro as checkPro } from "../lib/user";
+
+const BANNER_KEY = "pro_banner_dismissed";
 
 export default function SnippetsPage() {
   const { user } = useAuth();
-  const isPro = user?.userType === "pro" || user?.role === "admin";
+  const isPro = checkPro(user);
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    localStorage.getItem(BANNER_KEY) === "true"
+  );
+
+  const dismissBanner = () => {
+    localStorage.setItem(BANNER_KEY, "true");
+    setBannerDismissed(true);
+  };
 
   const loadPage = (p: number) => {
     setLoading(true);
@@ -36,12 +47,17 @@ export default function SnippetsPage() {
 
   return (
     <div>
-      {!isPro && !user?.isGuest && (
+      {!isPro && !user?.isGuest && !bannerDismissed && (
         <div className="flex items-center justify-between mb-6 px-4 py-3 border border-amber-500/20 bg-amber-500/5">
           <p className="text-xs font-mono text-amber-400/80">keep your code private with Pro</p>
-          <Link to="/settings" className="text-xs font-mono text-amber-400 hover:text-amber-300 transition-colors">
-            upgrade →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/settings" className="text-xs font-mono text-amber-400 hover:text-amber-300 transition-colors">
+              upgrade →
+            </Link>
+            <button onClick={dismissBanner} className="text-xs font-mono text-gray-600 hover:text-gray-400 transition-colors">
+              ✕
+            </button>
+          </div>
         </div>
       )}
       <div className="flex items-center justify-between mb-8">

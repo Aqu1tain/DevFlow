@@ -4,9 +4,10 @@ interface Props {
   onUpgrade: () => void;
   onClose: () => void;
   loading: boolean;
+  error?: string;
 }
 
-export default function UpgradeModal({ onUpgrade, onClose, loading }: Props) {
+export default function UpgradeModal({ onUpgrade, onClose, loading, error }: Props) {
   return (
     <div
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
@@ -28,9 +29,13 @@ export default function UpgradeModal({ onUpgrade, onClose, loading }: Props) {
           </li>
           <li className="text-xs font-mono text-gray-400">
             <span className="text-emerald-400 mr-2">+</span>
-            support future features
+            AI code explanation and correction
           </li>
         </ul>
+
+        {error && (
+          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 font-mono">{error}</p>
+        )}
 
         <div className="flex gap-3">
           <Button onClick={onUpgrade} disabled={loading} className="px-4 py-2.5 flex-1">

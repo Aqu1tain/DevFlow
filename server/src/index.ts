@@ -10,12 +10,14 @@ import adminRoutes from "./routes/admin";
 import executionRoutes from "./routes/execution";
 import aiRoutes from "./routes/ai";
 import billingRoutes from "./routes/billing";
-import { handleWebhook } from "./controllers/billingController";
+import { handleWebhook, validateStripeEnv } from "./controllers/billingController";
 import { socketAuth } from "./socket/auth";
 import { registerLiveSession } from "./socket/liveSession";
 import { connectRedis } from "./lib/redis";
 
 dotenv.config();
+
+if (process.env.NODE_ENV === "production") validateStripeEnv();
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/devflow";

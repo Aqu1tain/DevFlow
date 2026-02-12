@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { authApi, billingApi } from "../services/api";
+import { isPro as checkPro, isStripeUrl } from "../lib/user";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
 
@@ -150,7 +151,7 @@ function TotpSection() {
 
 function BillingSection() {
   const { user, refreshUser } = useAuth();
-  const isPro = user!.userType === "pro";
+  const isPro = checkPro(user);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -168,11 +169,13 @@ function BillingSection() {
 
   const upgrade = () => run(async () => {
     const { url } = await billingApi.checkout();
+    if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
     window.location.href = url;
   });
 
   const manage = () => run(async () => {
     const { url } = await billingApi.portal();
+    if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
     window.location.href = url;
   });
 
@@ -180,7 +183,7 @@ function BillingSection() {
     if (new URLSearchParams(window.location.search).get("upgraded") === "true") {
       refreshUser();
     }
-  }, []);
+  }, [refreshUser]);
 
   return (
     <div className="space-y-6">

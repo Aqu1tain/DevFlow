@@ -5,6 +5,7 @@ import type { SnippetInput, Visibility } from "../services/api";
 import { billingApi } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
+import { isPro as checkPro, isStripeUrl } from "../lib/user";
 import Button from "./Button";
 import OutputPanel from "./OutputPanel";
 import UpgradeModal from "./UpgradeModal";
@@ -28,7 +29,7 @@ const VISIBILITIES: Visibility[] = ["public", "unlisted", "private"];
 
 export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
   const { user } = useAuth();
-  const isPro = user?.userType === "pro" || user?.role === "admin";
+  const isPro = checkPro(user);
   const navigate = useNavigate();
   const location = useLocation();
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -41,6 +42,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [showUpgrade, setShowUpgrade] = useState((location.state as { upgrade?: boolean })?.upgrade ?? false);
   const [upgrading, setUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
@@ -93,11 +95,14 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   };
 
   const handleUpgrade = async () => {
+    setUpgradeError("");
     setUpgrading(true);
     try {
       const { url } = await billingApi.checkout();
+      if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      setUpgradeError(err instanceof Error ? err.message : "Something went wrong");
       setUpgrading(false);
     }
   };
@@ -116,6 +121,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
         onUpgrade={handleUpgrade}
         onClose={() => setShowUpgrade(false)}
         loading={upgrading}
+        error={upgradeError}
       />
     )}
     <form onSubmit={handleSubmit} className="space-y-4">

@@ -16,6 +16,7 @@ import useAI from "../hooks/useAI";
 import AIPanel from "../components/AIPanel";
 import UpgradeModal from "../components/UpgradeModal";
 import { billingApi } from "../services/api";
+import { isPro as checkPro, isStripeUrl } from "../lib/user";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -47,9 +48,10 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const isPro = user?.userType === "pro" || user?.role === "admin";
+  const isPro = checkPro(user);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState("");
   const { snippet, setSnippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
   const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
@@ -96,11 +98,14 @@ export default function ViewSnippetPage() {
   };
 
   const handleUpgrade = async () => {
+    setUpgradeError("");
     setUpgrading(true);
     try {
       const { url } = await billingApi.checkout();
+      if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      setUpgradeError(err instanceof Error ? err.message : "Something went wrong");
       setUpgrading(false);
     }
   };
@@ -124,6 +129,7 @@ export default function ViewSnippetPage() {
         onUpgrade={handleUpgrade}
         onClose={() => setShowUpgrade(false)}
         loading={upgrading}
+        error={upgradeError}
       />
     )}
     <div>
