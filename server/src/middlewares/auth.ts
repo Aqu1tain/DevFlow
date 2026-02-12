@@ -45,9 +45,7 @@ export const optionalAuth: Middleware = async (req, _res, next) => {
     const payload = verifyToken(token);
     const user = await User.findById(payload.userId);
     if (user && (!user.isGuest || !user.isGuestExpired())) attachUser(req, user);
-  } catch {
-    // silent — continue without auth
-  }
+  } catch {}
 
   next();
 };

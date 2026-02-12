@@ -16,6 +16,8 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+const toError = (err: unknown) => err instanceof Error ? err.message : "Something went wrong";
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
@@ -44,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
       return null;
     } catch (err) {
-      return err instanceof Error ? err.message : "Something went wrong";
+      return toError(err);
     }
   };
 
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.user);
       return null;
     } catch (err) {
-      return err instanceof Error ? err.message : "Something went wrong";
+      return toError(err);
     }
   };
 

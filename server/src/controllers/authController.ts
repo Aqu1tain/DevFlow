@@ -105,7 +105,7 @@ export const verifyTotp = handle(async (req, res) => {
 
   if (!payload.pendingTotp) throw fail("Invalid token", 401);
 
-  const user = await User.findById(payload.userId).select("+totpSecret");
+  const user = await findUserWithSecret(payload.userId);
   if (!user || !user.totpEnabled || !user.totpSecret) throw fail("2FA not configured", 401);
 
   if (!totp.verify(cleanCode(code), user.totpSecret))

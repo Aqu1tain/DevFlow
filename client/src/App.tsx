@@ -37,17 +37,17 @@ function AppLayout() {
                 </>
               )}
               {user.isGuest ? (
-                <span className="text-xs font-mono text-gray-500">guest</span>
+                <>
+                  <span className="text-xs font-mono text-gray-500">guest</span>
+                  <button
+                    onClick={logout}
+                    className="cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    logout
+                  </button>
+                </>
               ) : (
                 <UserDropdown username={user.username} onLogout={logout} />
-              )}
-              {user.isGuest && (
-                <button
-                  onClick={logout}
-                  className="cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  logout
-                </button>
               )}
             </div>
           )}

@@ -97,8 +97,7 @@ export const snippetsApi = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<{ message: string }>(`/snippets/${id}`, { method: "DELETE" }),
+  delete: (id: string) => del<{ message: string }>(`/snippets/${id}`),
 };
 
 export interface Comment {
@@ -119,9 +118,7 @@ export const commentsApi = {
       body: JSON.stringify({ body }),
     }),
   delete: (snippetId: string, commentId: string) =>
-    request<{ message: string }>(`/snippets/${snippetId}/comments/${commentId}`, {
-      method: "DELETE",
-    }),
+    del<{ message: string }>(`/snippets/${snippetId}/comments/${commentId}`),
 };
 
 export interface Snapshot {
@@ -152,19 +149,21 @@ export const snapshotsApi = {
       method: "POST",
     }),
   delete: (snippetId: string, snapshotId: string) =>
-    request<{ message: string }>(`/snippets/${snippetId}/snapshots/${snapshotId}`, {
-      method: "DELETE",
-    }),
+    del<{ message: string }>(`/snippets/${snippetId}/snapshots/${snapshotId}`),
 };
 
 function post<T>(path: string, body?: object) {
   return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
 }
 
+function del<T>(path: string, body?: object) {
+  return request<T>(path, { method: "DELETE", body: body ? JSON.stringify(body) : undefined });
+}
+
 export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: (page = 1) => request<AdminSnippetsPage>(`/admin/snippets?page=${page}`),
-  deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
+  deleteSnippet: (id: string) => del<{ message: string }>(`/admin/snippets/${id}`),
 };
 
 export interface ExecutionResult {
@@ -197,6 +196,5 @@ export const authApi = {
   setupTotp: () => request<{ secret: string; uri: string }>("/auth/totp/setup"),
   enableTotp: (secret: string, code: string) =>
     post<{ message: string }>("/auth/totp/enable", { secret, code }),
-  disableTotp: (code: string) =>
-    request<{ message: string }>("/auth/totp/disable", { method: "DELETE", body: JSON.stringify({ code }) }),
+  disableTotp: (code: string) => del<{ message: string }>("/auth/totp/disable", { code }),
 };
