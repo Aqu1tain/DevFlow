@@ -1,12 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function GitHubCallbackPage() {
   const navigate = useNavigate();
   const { loginWithToken } = useAuth();
+  const processed = useRef(false);
 
   useEffect(() => {
+    if (processed.current) return;
+    processed.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const tempToken = params.get("tempToken");
