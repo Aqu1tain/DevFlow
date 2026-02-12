@@ -47,7 +47,7 @@ function AppLayout() {
                   </button>
                 </>
               ) : (
-                <UserDropdown username={user.username} onLogout={logout} />
+                <UserDropdown username={user.username} userType={user.userType} onLogout={logout} />
               )}
             </div>
           )}

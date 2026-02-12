@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput, Visibility } from "../services/api";
+import { billingApi } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
@@ -106,10 +107,22 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           <select
             className="bg-transparent text-xs font-mono text-gray-400 focus:outline-none cursor-pointer"
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value as Visibility)}
+            onChange={async (e) => {
+              const v = e.target.value;
+              if (v === "private" && !isPro) {
+                try {
+                  const { url } = await billingApi.checkout();
+                  window.location.href = url;
+                } catch {}
+                return;
+              }
+              setVisibility(v as Visibility);
+            }}
           >
-            {VISIBILITIES.filter((v) => v !== "private" || isPro).map((v) => (
-              <option key={v} value={v}>{v}</option>
+            {VISIBILITIES.map((v) => (
+              <option key={v} value={v}>
+                {v === "private" && !isPro ? "private (pro)" : v}
+              </option>
             ))}
           </select>
           <select

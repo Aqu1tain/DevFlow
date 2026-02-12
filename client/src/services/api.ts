@@ -216,6 +216,11 @@ export const aiApi = {
   },
 };
 
+export const billingApi = {
+  checkout: () => post<{ url: string }>("/billing/checkout"),
+  portal: () => post<{ url: string }>("/billing/portal"),
+};
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),

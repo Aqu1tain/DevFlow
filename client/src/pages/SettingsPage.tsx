@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
-import { authApi } from "../services/api";
+import { authApi, billingApi } from "../services/api";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
 
@@ -148,6 +148,67 @@ function TotpSection() {
   );
 }
 
+function BillingSection() {
+  const { user, refreshUser } = useAuth();
+  const isPro = user!.userType === "pro";
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const run = async (fn: () => Promise<void>) => {
+    setError("");
+    setLoading(true);
+    try {
+      await fn();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const upgrade = () => run(async () => {
+    const { url } = await billingApi.checkout();
+    window.location.href = url;
+  });
+
+  const manage = () => run(async () => {
+    const { url } = await billingApi.portal();
+    window.location.href = url;
+  });
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("upgraded") === "true") {
+      refreshUser();
+    }
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-mono font-medium text-gray-300">plan</p>
+        <p className="text-xs text-gray-600 mt-0.5 font-mono">{isPro ? "pro" : "free"}</p>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 font-mono">{error}</p>
+      )}
+
+      {isPro ? (
+        <Button onClick={manage} disabled={loading} variant="ghost" className="px-4 py-2.5">
+          {loading ? "loading..." : "manage subscription"}
+        </Button>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs font-mono text-gray-500">upgrade to Pro to unlock private snippets</p>
+          <Button onClick={upgrade} disabled={loading} className="px-4 py-2.5">
+            {loading ? "loading..." : "upgrade to Pro"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
 
@@ -156,6 +217,13 @@ export default function SettingsPage() {
   return (
     <div className="max-w-lg space-y-10">
       <h1 className="text-lg font-mono font-medium">settings</h1>
+
+      <section className="space-y-6">
+        <div className="border-b border-white/[0.06] pb-2">
+          <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest">billing</h2>
+        </div>
+        <BillingSection />
+      </section>
 
       <section className="space-y-6">
         <div className="border-b border-white/[0.06] pb-2">
