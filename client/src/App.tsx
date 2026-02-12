@@ -11,7 +11,7 @@ import ViewSnippetPage from "./pages/ViewSnippetPage";
 import LivePage from "./pages/LivePage";
 import AdminPage from "./pages/AdminPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
-import AdminTotpPage from "./pages/AdminTotpPage";
+import TotpSettingsPage from "./pages/TotpSettingsPage";
 
 function AppLayout() {
   const { user, logout } = useAuth();
@@ -33,10 +33,12 @@ function AppLayout() {
                   <Link to="/admin/analytics" className="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors">
                     analytics
                   </Link>
-                  <Link to="/admin/2fa" className="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors">
-                    2fa
-                  </Link>
                 </>
+              )}
+              {!user.isGuest && (
+                <Link to="/settings/2fa" className="text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors">
+                  2fa
+                </Link>
               )}
               <span className="text-xs font-mono text-gray-500">
                 {user.isGuest ? "guest" : user.username}
@@ -75,7 +77,7 @@ export default function App() {
             <Route path="/snippets/:id/live" element={<LivePage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-            <Route path="/admin/2fa" element={<AdminTotpPage />} />
+            <Route path="/settings/2fa" element={<TotpSettingsPage />} />
           </Route>
         </Routes>
       </AuthProvider>

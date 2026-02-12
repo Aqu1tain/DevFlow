@@ -165,11 +165,6 @@ export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: (page = 1) => request<AdminSnippetsPage>(`/admin/snippets?page=${page}`),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
-  setupTotp: () => request<{ secret: string; uri: string }>("/auth/totp/setup"),
-  enableTotp: (secret: string, code: string) =>
-    post<{ message: string }>("/auth/totp/enable", { secret, code }),
-  disableTotp: (code: string) =>
-    request<{ message: string }>("/auth/totp/disable", { method: "DELETE", body: JSON.stringify({ code }) }),
 };
 
 export interface ExecutionResult {
@@ -199,4 +194,9 @@ export const authApi = {
     post<AuthResponse>("/auth/guest/convert", { email, password, username }),
   me: () =>
     request<{ user: User }>("/auth/me"),
+  setupTotp: () => request<{ secret: string; uri: string }>("/auth/totp/setup"),
+  enableTotp: (secret: string, code: string) =>
+    post<{ message: string }>("/auth/totp/enable", { secret, code }),
+  disableTotp: (code: string) =>
+    request<{ message: string }>("/auth/totp/disable", { method: "DELETE", body: JSON.stringify({ code }) }),
 };

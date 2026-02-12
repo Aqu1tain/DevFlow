@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
-import { adminApi } from "../services/api";
+import { authApi } from "../services/api";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
 
 type Step = "idle" | "setup";
 
-export default function AdminTotpPage() {
+export default function TotpSettingsPage() {
   const { user, refreshUser } = useAuth();
   const [step, setStep] = useState<Step>("idle");
   const [secret, setSecret] = useState("");
@@ -19,15 +19,15 @@ export default function AdminTotpPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user?.role !== "admin") return <Navigate to="/snippets" replace />;
+  if (user?.isGuest) return <Navigate to="/snippets" replace />;
 
-  const totpEnabled = user.totpEnabled;
+  const totpEnabled = user!.totpEnabled;
 
   const startSetup = async () => {
     setError("");
     setLoading(true);
     try {
-      const res = await adminApi.setupTotp();
+      const res = await authApi.setupTotp();
       setSecret(res.secret);
       setUri(res.uri);
       setStep("setup");
@@ -43,7 +43,7 @@ export default function AdminTotpPage() {
     setError("");
     setLoading(true);
     try {
-      await adminApi.enableTotp(secret, code);
+      await authApi.enableTotp(secret, code);
       await refreshUser();
       setSuccess("2FA enabled. Use your authenticator app for future logins.");
       setStep("idle");
@@ -60,7 +60,7 @@ export default function AdminTotpPage() {
     setError("");
     setLoading(true);
     try {
-      await adminApi.disableTotp(disableCode);
+      await authApi.disableTotp(disableCode);
       await refreshUser();
       setSuccess("2FA disabled.");
       setDisableCode("");
