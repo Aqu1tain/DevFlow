@@ -83,7 +83,7 @@ export function useLiveCoding(snippetId: string | undefined) {
 
     const onModeChanged = (mode: Mode) => setModeState(mode);
 
-    const events: Array<[string, (...args: unknown[]) => void]> = [
+    const events: Array<[string, (...args: any[]) => void]> = [
       ["connect", onConnect],
       ["room-state", onRoomState],
       ["user-joined", onUserJoined],
