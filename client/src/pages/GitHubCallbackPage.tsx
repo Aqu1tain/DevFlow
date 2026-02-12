@@ -17,9 +17,11 @@ export default function GitHubCallbackPage() {
       return;
     }
 
-    loginWithToken(token).then((err) =>
-      navigate(err ? "/login" : "/snippets", { replace: true }),
-    );
+    loginWithToken(token).then((err) => {
+      const redirect = sessionStorage.getItem("auth_redirect") ?? "/snippets";
+      sessionStorage.removeItem("auth_redirect");
+      navigate(err ? "/login" : redirect, { replace: true });
+    });
   }, [navigate, loginWithToken]);
 
   return (

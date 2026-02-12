@@ -1,23 +1,26 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/Button";
 import AuthLayout, { Divider, GitHubButton, inputClass } from "../components/AuthLayout";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loginAsGuest } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/snippets";
+
   const submit = async (action: () => Promise<string | null>) => {
     setLoading(true);
     setError("");
     const err = await action();
     if (err) { setError(err); setLoading(false); return; }
-    navigate("/snippets");
+    navigate(from, { replace: true });
   };
 
   return (
@@ -58,7 +61,7 @@ export default function LoginPage() {
       <Divider />
 
       <div className="space-y-2.5">
-        <GitHubButton />
+        <GitHubButton redirectTo={from} />
         <Button variant="ghost" onClick={() => submit(loginAsGuest)} disabled={loading} className="w-full px-4 py-2.5">
           continue as guest
         </Button>
