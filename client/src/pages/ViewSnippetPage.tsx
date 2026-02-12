@@ -100,36 +100,6 @@ export default function ViewSnippetPage() {
             )}
           </div>
           <div className="flex gap-2 shrink-0 ml-4">
-            {user && canRun(snippet.language) && (
-              <Button
-                variant="accent"
-                className="px-3 py-1.5"
-                onClick={() => run(snippet.code, snippet.language)}
-                disabled={running}
-              >
-                {running ? "Running..." : "Run"}
-              </Button>
-            )}
-            {user?.userType === "pro" && (
-              <>
-                <Button
-                  variant="accent"
-                  className="px-3 py-1.5"
-                  onClick={() => ai.ask(snippet.code, snippet.language, "explain")}
-                  disabled={ai.loading}
-                >
-                  Explain
-                </Button>
-                <Button
-                  variant="accent"
-                  className="px-3 py-1.5"
-                  onClick={() => ai.ask(snippet.code, snippet.language, "correct")}
-                  disabled={ai.loading}
-                >
-                  Correct
-                </Button>
-              </>
-            )}
             <Link to={`/snippets/${id}/live`} className={buttonClass("accent", "px-3 py-1.5")}>
               Go Live
             </Link>
@@ -188,6 +158,41 @@ export default function ViewSnippetPage() {
         editorInstanceRef={editorInstanceRef}
         onCommentClick={scrollToComment}
       />
+
+      {user && (
+        <div className="flex gap-2 py-2">
+          {canRun(snippet.language) && (
+            <Button
+              variant="accent"
+              className="px-3 py-1.5"
+              onClick={() => run(snippet.code, snippet.language)}
+              disabled={running}
+            >
+              {running ? "Running..." : "Run"}
+            </Button>
+          )}
+          {user.userType === "pro" && (
+            <>
+              <Button
+                variant="ghost"
+                className="px-3 py-1.5"
+                onClick={() => ai.ask(snippet.code, snippet.language, "explain")}
+                disabled={ai.loading}
+              >
+                Explain
+              </Button>
+              <Button
+                variant="ghost"
+                className="px-3 py-1.5"
+                onClick={() => ai.ask(snippet.code, snippet.language, "correct")}
+                disabled={ai.loading}
+              >
+                Correct
+              </Button>
+            </>
+          )}
+        </div>
+      )}
 
       {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
 
