@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput, Visibility } from "../services/api";
 import { billingApi } from "../services/api";
@@ -28,6 +29,8 @@ const VISIBILITIES: Visibility[] = ["public", "unlisted", "private"];
 export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
   const { user } = useAuth();
   const isPro = user?.userType === "pro" || user?.role === "admin";
+  const navigate = useNavigate();
+  const location = useLocation();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -36,7 +39,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const { output, running, duration, run, clear } = useExecution();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
-  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState((location.state as { upgrade?: boolean })?.upgrade ?? false);
   const [upgrading, setUpgrading] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +135,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
               const v = e.target.value;
               if (v === "private" && !isPro) {
                 if (user?.isGuest) {
-                  window.location.href = "/register";
+                  navigate("/register", { state: { from: location.pathname, upgrade: true } });
                   return;
                 }
                 setShowUpgrade(true);
