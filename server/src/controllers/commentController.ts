@@ -26,7 +26,8 @@ export const create = handle<Params>(async (req, res) => {
 
 export const remove = handle<Params>(async (req, res) => {
   const comment = await commentService.findById(req.params.commentId!);
-  if (!comment) return void res.status(404).json({ error: "Comment not found" });
+  if (!comment || String(comment.snippetId) !== req.params.id)
+    return void res.status(404).json({ error: "Comment not found" });
 
   const isAuthor = String(comment.userId) === req.userId;
   const isAdmin = req.user?.role === "admin";

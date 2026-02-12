@@ -2,7 +2,8 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 import type { Request } from "express";
 import type { IUser } from "../models/User";
 
-const SECRET = process.env.JWT_SECRET || "change_me_in_production";
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) throw new Error("JWT_SECRET environment variable is required");
 const EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "7d") as SignOptions["expiresIn"];
 const GUEST_EXPIRES_IN = "24h" as SignOptions["expiresIn"];
 

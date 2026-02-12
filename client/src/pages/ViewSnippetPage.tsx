@@ -43,8 +43,8 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { snippet, setSnippet, loading, error } = useSnippet(id);
-  const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
-  const { snapshots, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
+  const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
+  const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
   const { output, running, duration, run, clear } = useExecution();
   const [showHistory, setShowHistory] = useState(false);
   const citeRef = useRef<((citation: string) => void) | null>(null);
@@ -146,6 +146,10 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
+      {snapshotsError && (
+        <p className="text-xs text-red-400 mb-4">{snapshotsError}</p>
+      )}
+
       {showHistory && (
         <SnapshotPanel
           snapshots={snapshots}
@@ -167,6 +171,10 @@ export default function ViewSnippetPage() {
       />
 
       {output && <OutputPanel output={output} duration={duration} onClear={clear} />}
+
+      {commentsError && (
+        <p className="text-xs text-red-400 mt-8">{commentsError}</p>
+      )}
 
       <Comments
         visibility={snippet.visibility}

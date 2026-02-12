@@ -29,6 +29,7 @@ export async function execute(language: string, code: string) {
     if (!res.ok) throw new Error(`Execution engine returned ${res.status}`);
 
     const data = (await res.json()) as PistonResponse;
+    if (!data.run) throw new Error("Execution engine returned no result");
     return {
       stdout: truncate(data.run.stdout),
       stderr: truncate(data.run.stderr),

@@ -18,26 +18,36 @@ interface Room {
   users: Map<string, RoomUser>;
 }
 
+const MAX_YJS_UPDATE = 512 * 1024;
+const MAX_AWARENESS_UPDATE = 64 * 1024;
+
 const rooms = new Map<string, Room>();
+const roomCreating = new Map<string, Promise<Room | null>>();
 
 async function getOrCreateRoom(snippetId: string, socket: Socket): Promise<Room | null> {
   const existing = rooms.get(snippetId);
   if (existing) return existing;
 
-  const snippet = await snippetService.findById(snippetId);
-  if (!snippet) return null;
+  const inflight = roomCreating.get(snippetId);
+  if (inflight) return inflight;
 
-  const doc = new Y.Doc();
-  doc.getText("code").insert(0, snippet.code);
+  const promise = (async () => {
+    const snippet = await snippetService.findById(snippetId);
+    if (!snippet) return null;
 
-  const room: Room = {
-    doc,
-    hostSocketId: socket.id,
-    mode: "public",
-    users: new Map(),
-  };
-  rooms.set(snippetId, room);
-  return room;
+    const race = rooms.get(snippetId);
+    if (race) return race;
+
+    const doc = new Y.Doc();
+    doc.getText("code").insert(0, snippet.code);
+    const room: Room = { doc, hostSocketId: socket.id, mode: "public", users: new Map() };
+    rooms.set(snippetId, room);
+    return room;
+  })();
+
+  roomCreating.set(snippetId, promise);
+  promise.finally(() => roomCreating.delete(snippetId));
+  return promise;
 }
 
 function roomUsers(room: Room): RoomUser[] {
@@ -107,6 +117,7 @@ export function registerLiveSession(io: Server) {
 
     socket.on("yjs-update", (update: number[]) => {
       if (!currentSnippetId) return;
+      if (!Array.isArray(update) || update.length > MAX_YJS_UPDATE) return;
       const room = rooms.get(currentSnippetId);
       if (!room || !room.users.has(socket.id)) return;
 
@@ -119,6 +130,7 @@ export function registerLiveSession(io: Server) {
 
     socket.on("awareness-update", (update: number[]) => {
       if (!currentSnippetId) return;
+      if (!Array.isArray(update) || update.length > MAX_AWARENESS_UPDATE) return;
       const room = rooms.get(currentSnippetId);
       if (!room || !room.users.has(socket.id)) return;
       socket.to(currentSnippetId).emit("awareness-update", update);

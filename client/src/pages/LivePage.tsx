@@ -44,7 +44,9 @@ export default function LivePage() {
       const rules: string[] = [];
       provider.awareness.getStates().forEach((state, clientID) => {
         if (clientID === doc.clientID || !state.user) return;
-        const { color, name } = state.user;
+        const safeColor = /^#[0-9a-fA-F]{6}$/.test(state.user.color) ? state.user.color : "#888888";
+        const safeName = String(state.user.name).replace(/["\\]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ").slice(0, 50);
+        const { color, name } = { color: safeColor, name: safeName };
         rules.push(`
           .yRemoteSelection-${clientID} {
             background-color: ${color}33;
@@ -91,10 +93,13 @@ export default function LivePage() {
   const handleSave = async () => {
     if (!id || !doc) return;
     setSaveStatus("saving");
-    const code = doc.getText("code").toString();
-    await snippetsApi.update(id, { code });
-    setSaveStatus("saved");
-    setTimeout(() => setSaveStatus("idle"), 1500);
+    try {
+      await snippetsApi.update(id, { code: doc.getText("code").toString() });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch {
+      setSaveStatus("idle");
+    }
   };
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;
