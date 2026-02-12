@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
-import { authApi } from "../services/api";
+import { authApi, profileApi } from "../services/api";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
+
+const FONT_SIZE_KEY = "devflow_editor_font_size";
 
 type TotpStep = "idle" | "setup";
 
@@ -148,6 +150,94 @@ function TotpSection() {
   );
 }
 
+function ProfileSection() {
+  const { user, refreshUser } = useAuth();
+  const [username, setUsername] = useState(user!.username);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await profileApi.update({ username });
+      await refreshUser();
+      setSuccess("Username updated.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-mono font-medium text-gray-300">username</p>
+        <p className="text-xs text-gray-600 mt-0.5 font-mono">2-30 characters, letters, numbers, _ or -</p>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 font-mono">{error}</p>
+      )}
+      {success && (
+        <p className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 font-mono">{success}</p>
+      )}
+
+      <form onSubmit={save} className="flex gap-3 items-start max-w-xs">
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className={inputClass}
+        />
+        <Button type="submit" disabled={loading || username === user!.username} className="px-4 py-2.5 shrink-0">
+          {loading ? "saving..." : "save"}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function EditorSection() {
+  const [fontSize, setFontSize] = useState(() =>
+    parseInt(localStorage.getItem(FONT_SIZE_KEY) || "14"),
+  );
+
+  const handleChange = (value: number) => {
+    setFontSize(value);
+    localStorage.setItem(FONT_SIZE_KEY, String(value));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-mono font-medium text-gray-300">editor font size</p>
+        <p className="text-xs text-gray-600 mt-0.5 font-mono">{fontSize}px</p>
+      </div>
+
+      <input
+        type="range"
+        min={12}
+        max={24}
+        value={fontSize}
+        onChange={(e) => handleChange(parseInt(e.target.value))}
+        className="w-full max-w-xs accent-emerald-500"
+      />
+
+      <div
+        className="border border-white/[0.06] bg-white/[0.02] px-4 py-3 font-mono text-gray-300 overflow-x-auto"
+        style={{ fontSize: `${fontSize}px` }}
+      >
+        const greeting = "hello, world";
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
 
@@ -159,9 +249,23 @@ export default function SettingsPage() {
 
       <section className="space-y-6">
         <div className="border-b border-white/[0.06] pb-2">
+          <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest">profile</h2>
+        </div>
+        <ProfileSection />
+      </section>
+
+      <section className="space-y-6">
+        <div className="border-b border-white/[0.06] pb-2">
           <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest">security</h2>
         </div>
         <TotpSection />
+      </section>
+
+      <section className="space-y-6">
+        <div className="border-b border-white/[0.06] pb-2">
+          <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest">editor</h2>
+        </div>
+        <EditorSection />
       </section>
     </div>
   );
