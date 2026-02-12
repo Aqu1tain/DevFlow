@@ -18,5 +18,6 @@ const commentSchema = new Schema<IComment>(
 );
 
 commentSchema.index({ snippetId: 1, createdAt: -1 });
+commentSchema.index({ userId: 1, createdAt: -1 });
 
 export default mongoose.model<IComment>("Comment", commentSchema);
