@@ -6,7 +6,8 @@ import { createCheckout, createPortal } from "../controllers/billingController";
 const limiter = rateLimit({
   windowMs: 60_000,
   limit: 10,
-  keyGenerator: (req) => req.userId ?? req.ip ?? "unknown",
+  keyGenerator: (req) => req.userId ?? "unknown",
+  validate: { ip: false },
   message: { error: "Too many billing requests, try again in a minute" },
 });
 
