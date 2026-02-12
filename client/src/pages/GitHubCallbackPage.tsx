@@ -9,15 +9,23 @@ export default function GitHubCallbackPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
+    const tempToken = params.get("tempToken");
 
     window.history.replaceState(null, "", "/auth/callback");
 
-    if (!token || params.get("error")) {
+    if (params.get("error") || (!token && !tempToken)) {
       navigate("/login?error=github_auth_failed", { replace: true });
       return;
     }
 
-    loginWithToken(token).then((err) => {
+    if (tempToken) {
+      const redirect = sessionStorage.getItem("auth_redirect") ?? "/snippets";
+      sessionStorage.removeItem("auth_redirect");
+      navigate("/login", { replace: true, state: { tempToken, from: { pathname: redirect } } });
+      return;
+    }
+
+    loginWithToken(token!).then((err) => {
       const redirect = sessionStorage.getItem("auth_redirect") ?? "/snippets";
       sessionStorage.removeItem("auth_redirect");
       navigate(err ? "/login" : redirect, { replace: true });

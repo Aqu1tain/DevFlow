@@ -301,8 +301,13 @@ export const githubCallback = async (req: Request, res: Response) => {
     const accessToken = await getGitHubAccessToken(code);
     const { githubUser, email } = await getGitHubUser(accessToken);
     const user = await findOrCreateGitHubUser(githubUser, email);
-    const token = generateToken(user);
-    res.redirect(`${clientUrl()}/auth/callback?token=${token}`);
+
+    if (user.totpEnabled) {
+      const tempToken = generateTempToken(String(user._id));
+      return res.redirect(`${clientUrl()}/auth/callback?tempToken=${tempToken}`);
+    }
+
+    res.redirect(`${clientUrl()}/auth/callback?token=${generateToken(user)}`);
   } catch {
     res.redirect(failUrl);
   }

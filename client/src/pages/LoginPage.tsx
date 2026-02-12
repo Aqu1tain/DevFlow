@@ -11,11 +11,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
-  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [tempToken, setTempToken] = useState<string | null>(state?.tempToken ?? null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/snippets";
+  const state = location.state as { from?: { pathname: string }; tempToken?: string } | null;
+  const from = state?.from?.pathname ?? "/snippets";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
