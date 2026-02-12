@@ -12,12 +12,18 @@ export interface User {
   userType: "guest" | "free" | "pro";
   role: string;
   isGuest: boolean;
+  totpEnabled: boolean;
   guestExpiresAt?: string;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
+}
+
+export interface TotpRequired {
+  requireTotp: true;
+  tempToken: string;
 }
 
 export type Visibility = "public" | "unlisted" | "private";
@@ -159,7 +165,11 @@ export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: (page = 1) => request<AdminSnippetsPage>(`/admin/snippets?page=${page}`),
   deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
-
+  setupTotp: () => request<{ secret: string; uri: string }>("/auth/totp/setup"),
+  enableTotp: (secret: string, code: string) =>
+    post<{ message: string }>("/auth/totp/enable", { secret, code }),
+  disableTotp: (code: string) =>
+    request<{ message: string }>("/auth/totp/disable", { method: "DELETE", body: JSON.stringify({ code }) }),
 };
 
 export interface ExecutionResult {
@@ -180,7 +190,9 @@ export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),
   login: (email: string, password: string) =>
-    post<AuthResponse>("/auth/login", { email, password }),
+    post<AuthResponse | TotpRequired>("/auth/login", { email, password }),
+  verifyTotp: (tempToken: string, code: string) =>
+    post<AuthResponse>("/auth/totp/verify", { tempToken, code }),
   guest: () =>
     post<AuthResponse>("/auth/guest"),
   convertGuest: (email: string, password: string, username?: string) =>
