@@ -6,19 +6,17 @@ import { authApi } from "../services/api";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
 
-type Step = "idle" | "setup";
+type TotpStep = "idle" | "setup";
 
-export default function TotpSettingsPage() {
+function TotpSection() {
   const { user, refreshUser } = useAuth();
-  const [step, setStep] = useState<Step>("idle");
+  const [step, setStep] = useState<TotpStep>("idle");
   const [secret, setSecret] = useState("");
   const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-
-  if (user?.isGuest) return <Navigate to="/snippets" replace />;
 
   const totpEnabled = user!.totpEnabled;
 
@@ -77,11 +75,11 @@ export default function TotpSettingsPage() {
   );
 
   return (
-    <div className="max-w-sm space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-mono font-medium">two-factor authentication</h1>
-        <p className="text-xs text-gray-500 mt-1 font-mono">
-          {totpEnabled ? "2FA is enabled on your account" : "2FA is not enabled"}
+        <p className="text-sm font-mono font-medium text-gray-300">two-factor authentication</p>
+        <p className="text-xs text-gray-600 mt-0.5 font-mono">
+          {totpEnabled ? "enabled" : "not enabled"}
         </p>
       </div>
 
@@ -105,7 +103,7 @@ export default function TotpSettingsPage() {
               scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
             </p>
             <div className="bg-white p-3 inline-block">
-              <QRCodeSVG value={uri} size={180} />
+              <QRCodeSVG value={uri} size={160} />
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-mono text-gray-600">or enter the secret manually:</p>
@@ -113,7 +111,7 @@ export default function TotpSettingsPage() {
             </div>
           </div>
 
-          <form onSubmit={enable} className="space-y-4">
+          <form onSubmit={enable} className="space-y-4 max-w-xs">
             <div>
               <label className="block text-xs font-mono text-gray-400 mb-1.5">enter the 6-digit code to confirm</label>
               {codeInput}
@@ -136,7 +134,7 @@ export default function TotpSettingsPage() {
       )}
 
       {totpEnabled && (
-        <form onSubmit={disable} className="space-y-4">
+        <form onSubmit={disable} className="space-y-4 max-w-xs">
           <div>
             <label className="block text-xs font-mono text-gray-400 mb-1.5">enter your current code to disable 2FA</label>
             {codeInput}
@@ -146,6 +144,25 @@ export default function TotpSettingsPage() {
           </Button>
         </form>
       )}
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  const { user } = useAuth();
+
+  if (user?.isGuest) return <Navigate to="/snippets" replace />;
+
+  return (
+    <div className="max-w-lg space-y-10">
+      <h1 className="text-lg font-mono font-medium">settings</h1>
+
+      <section className="space-y-6">
+        <div className="border-b border-white/[0.06] pb-2">
+          <h2 className="text-xs font-mono text-gray-500 uppercase tracking-widest">security</h2>
+        </div>
+        <TotpSection />
+      </section>
     </div>
   );
 }

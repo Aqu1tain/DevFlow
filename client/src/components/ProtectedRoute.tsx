@@ -12,8 +12,8 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!isAuthenticated)
     return <Navigate to="/login" state={{ from: location }} replace />;
 
-  if (user?.role === "admin" && !user.totpEnabled && location.pathname !== "/settings/2fa")
-    return <Navigate to="/settings/2fa" replace />;
+  if (user?.role === "admin" && !user.totpEnabled && location.pathname !== "/settings")
+    return <Navigate to="/settings" replace />;
 
   return children;
 }
