@@ -8,15 +8,14 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, loginAsGuest, verifyTotp } = useAuth();
+  const state = location.state as { from?: { pathname: string }; tempToken?: string } | null;
+  const from = state?.from?.pathname ?? "/snippets";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [tempToken, setTempToken] = useState<string | null>(state?.tempToken ?? null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const state = location.state as { from?: { pathname: string }; tempToken?: string } | null;
-  const from = state?.from?.pathname ?? "/snippets";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
