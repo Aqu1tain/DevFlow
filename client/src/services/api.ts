@@ -12,12 +12,18 @@ export interface User {
   userType: "guest" | "free" | "pro";
   role: string;
   isGuest: boolean;
+  totpEnabled: boolean;
   guestExpiresAt?: string;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
+}
+
+export interface TotpRequired {
+  requireTotp: true;
+  tempToken: string;
 }
 
 export type Visibility = "public" | "unlisted" | "private";
@@ -91,8 +97,7 @@ export const snippetsApi = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-  delete: (id: string) =>
-    request<{ message: string }>(`/snippets/${id}`, { method: "DELETE" }),
+  delete: (id: string) => del<{ message: string }>(`/snippets/${id}`),
 };
 
 export interface Comment {
@@ -113,9 +118,7 @@ export const commentsApi = {
       body: JSON.stringify({ body }),
     }),
   delete: (snippetId: string, commentId: string) =>
-    request<{ message: string }>(`/snippets/${snippetId}/comments/${commentId}`, {
-      method: "DELETE",
-    }),
+    del<{ message: string }>(`/snippets/${snippetId}/comments/${commentId}`),
 };
 
 export interface Snapshot {
@@ -146,20 +149,21 @@ export const snapshotsApi = {
       method: "POST",
     }),
   delete: (snippetId: string, snapshotId: string) =>
-    request<{ message: string }>(`/snippets/${snippetId}/snapshots/${snapshotId}`, {
-      method: "DELETE",
-    }),
+    del<{ message: string }>(`/snippets/${snippetId}/snapshots/${snapshotId}`),
 };
 
 function post<T>(path: string, body?: object) {
   return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
 }
 
+function del<T>(path: string, body?: object) {
+  return request<T>(path, { method: "DELETE", body: body ? JSON.stringify(body) : undefined });
+}
+
 export const adminApi = {
   getStats: () => request<AdminStats>("/admin/stats"),
   getSnippets: (page = 1) => request<AdminSnippetsPage>(`/admin/snippets?page=${page}`),
-  deleteSnippet: (id: string) => request<{ message: string }>(`/admin/snippets/${id}`, { method: "DELETE" }),
-
+  deleteSnippet: (id: string) => del<{ message: string }>(`/admin/snippets/${id}`),
 };
 
 export interface ExecutionResult {
@@ -176,15 +180,57 @@ export const executionApi = {
     }),
 };
 
+export type AIAction = "explain" | "correct";
+
+export const aiApi = {
+  stream: async (
+    code: string,
+    language: string,
+    action: AIAction,
+    onChunk: (text: string) => void,
+    signal?: AbortSignal,
+  ) => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/ai`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ code, language, action }),
+      signal,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Request failed (${res.status})`);
+    }
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      onChunk(decoder.decode(value, { stream: true }));
+    }
+  },
+};
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),
   login: (email: string, password: string) =>
-    post<AuthResponse>("/auth/login", { email, password }),
+    post<AuthResponse | TotpRequired>("/auth/login", { email, password }),
+  verifyTotp: (tempToken: string, code: string) =>
+    post<AuthResponse>("/auth/totp/verify", { tempToken, code }),
   guest: () =>
     post<AuthResponse>("/auth/guest"),
   convertGuest: (email: string, password: string, username?: string) =>
     post<AuthResponse>("/auth/guest/convert", { email, password, username }),
   me: () =>
     request<{ user: User }>("/auth/me"),
+  setupTotp: () => request<{ secret: string; uri: string }>("/auth/totp/setup"),
+  enableTotp: (secret: string, code: string) =>
+    post<{ message: string }>("/auth/totp/enable", { secret, code }),
+  disableTotp: (code: string) => del<{ message: string }>("/auth/totp/disable", { code }),
 };

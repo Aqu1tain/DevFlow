@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
+import * as totp from "../utils/totp";
 import User, { IUser } from "../models/User";
-import { generateToken } from "../utils/jwt";
+import { generateToken, generateTempToken, verifyTempToken } from "../utils/jwt";
 
 interface GitHubTokenResponse {
   access_token?: string;
@@ -37,6 +38,10 @@ const handle =
 const fail = (message: string, status = 400) =>
   Object.assign(new Error(message), { status });
 
+const cleanCode = (code: string) => code.replace(/\s/g, "");
+
+const findUserWithSecret = (id: string) => User.findById(id).select("+totpSecret");
+
 const sanitize = (user: IUser) => ({
   id: user._id,
   email: user.email,
@@ -44,6 +49,7 @@ const sanitize = (user: IUser) => ({
   userType: user.userType,
   role: user.role,
   isGuest: user.isGuest,
+  totpEnabled: user.totpEnabled,
   guestExpiresAt: user.isGuest ? user.guestExpiresAt : undefined,
 });
 
@@ -73,13 +79,83 @@ export const login = handle(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) throw fail("Email and password required");
 
-  const user = await User.findOne({ email: email.toLowerCase(), isGuest: false }).select("+password");
+  const user = await User.findOne({ email: email.toLowerCase(), isGuest: false }).select("+password +totpSecret");
   if (!user || !(await user.comparePassword(password))) throw fail("Invalid credentials", 401);
+
+  if (user.totpEnabled) {
+    return void res.json({ requireTotp: true, tempToken: generateTempToken(String(user._id)) });
+  }
 
   user.lastLoginAt = new Date();
   await user.save();
 
   res.json(authResponse(user));
+});
+
+export const verifyTotp = handle(async (req, res) => {
+  const { tempToken, code } = req.body;
+  if (!tempToken || !code) throw fail("Missing token or code");
+
+  let payload: { userId: string; pendingTotp: boolean };
+  try {
+    payload = verifyTempToken(tempToken);
+  } catch {
+    throw fail("Session expired, please log in again", 401);
+  }
+
+  if (!payload.pendingTotp) throw fail("Invalid token", 401);
+
+  const user = await findUserWithSecret(payload.userId);
+  if (!user || !user.totpEnabled || !user.totpSecret) throw fail("2FA not configured", 401);
+
+  if (!totp.verify(cleanCode(code), user.totpSecret))
+    throw fail("Invalid code", 401);
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  res.json(authResponse(user));
+});
+
+export const setupTotp = handle(async (req, res) => {
+  const user = req.user!;
+  const secret = totp.generateSecret();
+  const uri = totp.keyuri(user.email || user.username, "DevFlow", secret);
+  res.json({ secret, uri });
+});
+
+export const enableTotp = handle(async (req, res) => {
+  const { secret, code } = req.body;
+  if (!secret || !code) throw fail("Missing secret or code");
+
+  if (!totp.verify(cleanCode(code), secret))
+    throw fail("Invalid code", 400);
+
+  const user = await findUserWithSecret(req.userId!);
+  if (!user) throw fail("User not found", 404);
+
+  user.totpSecret = secret;
+  user.totpEnabled = true;
+  await user.save();
+
+  res.json({ message: "2FA enabled" });
+});
+
+export const disableTotp = handle(async (req, res) => {
+  const { code } = req.body;
+  if (!code) throw fail("Missing code");
+
+  const user = await findUserWithSecret(req.userId!);
+  if (!user?.totpEnabled || !user.totpSecret) throw fail("2FA is not enabled");
+
+  if (!totp.verify(cleanCode(code), user.totpSecret))
+    throw fail("Invalid code", 401);
+
+  user.totpSecret = undefined;
+  user.totpEnabled = false;
+  await user.save();
+
+  res.json({ message: "2FA disabled" });
 });
 
 export const createGuest = handle(async (_req, res) => {
@@ -229,8 +305,13 @@ export const githubCallback = async (req: Request, res: Response) => {
     const accessToken = await getGitHubAccessToken(code);
     const { githubUser, email } = await getGitHubUser(accessToken);
     const user = await findOrCreateGitHubUser(githubUser, email);
-    const token = generateToken(user);
-    res.redirect(`${clientUrl()}/auth/callback?token=${token}`);
+
+    if (user.totpEnabled) {
+      const tempToken = generateTempToken(String(user._id));
+      return res.redirect(`${clientUrl()}/auth/callback?tempToken=${tempToken}`);
+    }
+
+    res.redirect(`${clientUrl()}/auth/callback?token=${generateToken(user)}`);
   } catch {
     res.redirect(failUrl);
   }

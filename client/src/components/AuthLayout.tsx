@@ -19,9 +19,14 @@ export function Divider() {
   );
 }
 
-export function GitHubButton() {
+export function GitHubButton({ redirectTo }: { redirectTo?: string }) {
+  const handleClick = () => {
+    if (redirectTo && redirectTo !== "/snippets")
+      sessionStorage.setItem("auth_redirect", redirectTo);
+  };
+
   return (
-    <a href={`${API_BASE}/auth/github`} className={buttonClass("ghost", "flex items-center justify-center gap-2 w-full px-4 py-2.5")}>
+    <a href={`${API_BASE}/auth/github`} onClick={handleClick} className={buttonClass("ghost", "flex items-center justify-center gap-2 w-full px-4 py-2.5")}>
       <GitHubIcon className="w-4 h-4" />
       continue with github
     </a>

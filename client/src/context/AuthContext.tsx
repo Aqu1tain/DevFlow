@@ -1,18 +1,22 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { authApi, setToken, getToken, clearToken, type User } from "../services/api";
+import { authApi, setToken, getToken, clearToken, type User, type TotpRequired } from "../services/api";
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<string | null>;
+  login: (email: string, password: string) => Promise<string | TotpRequired | null>;
   register: (email: string, password: string, username: string) => Promise<string | null>;
   loginAsGuest: () => Promise<string | null>;
   loginWithToken: (token: string) => Promise<string | null>;
+  verifyTotp: (tempToken: string, code: string) => Promise<string | null>;
+  refreshUser: () => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
+
+const toError = (err: unknown) => err instanceof Error ? err.message : "Something went wrong";
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
@@ -42,12 +46,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
       return null;
     } catch (err) {
-      return err instanceof Error ? err.message : "Something went wrong";
+      return toError(err);
     }
   };
 
-  const login = (email: string, password: string) =>
-    handleAuth(() => authApi.login(email, password));
+  const login = async (email: string, password: string): Promise<string | TotpRequired | null> => {
+    try {
+      const res = await authApi.login(email, password);
+      if ("requireTotp" in res) return res;
+      setToken(res.token);
+      setUser(res.user);
+      return null;
+    } catch (err) {
+      return toError(err);
+    }
+  };
+
+  const verifyTotp = (tempToken: string, code: string) =>
+    handleAuth(() => authApi.verifyTotp(tempToken, code));
+
+  const hydrateUser = async () => {
+    const { user } = await authApi.me();
+    setUser(user);
+  };
+
+  const refreshUser = async () => {
+    try { await hydrateUser(); } catch {}
+  };
 
   const register = (email: string, password: string, username: string) =>
     handleAuth(() => authApi.register(email, password, username));
@@ -57,8 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = useCallback(async (token: string) => {
     setToken(token);
     try {
-      const { user } = await authApi.me();
-      setUser(user);
+      await hydrateUser();
       return null;
     } catch (err) {
       clearToken();
@@ -73,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAuthenticated: !!user, login, register, loginAsGuest, loginWithToken, logout }}
+      value={{ user, loading, isAuthenticated: !!user, login, register, loginAsGuest, loginWithToken, verifyTotp, refreshUser, logout }}
     >
       {children}
     </AuthContext.Provider>

@@ -22,6 +22,17 @@ export const generateToken = (user: IUser): string => {
 export const verifyToken = (token: string): TokenPayload =>
   jwt.verify(token, SECRET, { issuer: "devflow" }) as TokenPayload;
 
+export interface TempTokenPayload {
+  userId: string;
+  pendingTotp: true;
+}
+
+export const generateTempToken = (userId: string): string =>
+  jwt.sign({ userId, pendingTotp: true }, SECRET, { expiresIn: "5m", issuer: "devflow" });
+
+export const verifyTempToken = (token: string): TempTokenPayload =>
+  jwt.verify(token, SECRET, { issuer: "devflow" }) as TempTokenPayload;
+
 export const extractToken = (req: Request): string | null => {
   const header = req.headers.authorization;
   if (!header) return null;
