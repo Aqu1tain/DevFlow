@@ -4,6 +4,8 @@ import type { IUser } from "../models/User";
 
 const SECRET = process.env.JWT_SECRET;
 if (!SECRET) throw new Error("JWT_SECRET environment variable is required");
+
+const ISSUER = "devflow";
 const EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "7d") as SignOptions["expiresIn"];
 const GUEST_EXPIRES_IN = "24h" as SignOptions["expiresIn"];
 
@@ -16,12 +18,12 @@ export interface TokenPayload {
 
 export const generateToken = (user: IUser): string => {
   const payload = { userId: user._id, userType: user.userType, role: user.role, isGuest: user.isGuest };
-  const opts: SignOptions = { expiresIn: user.isGuest ? GUEST_EXPIRES_IN : EXPIRES_IN, issuer: "devflow" };
+  const opts: SignOptions = { expiresIn: user.isGuest ? GUEST_EXPIRES_IN : EXPIRES_IN, issuer: ISSUER };
   return jwt.sign(payload, SECRET, opts);
 };
 
 export const verifyToken = (token: string): TokenPayload =>
-  jwt.verify(token, SECRET, { issuer: "devflow" }) as TokenPayload;
+  jwt.verify(token, SECRET, { issuer: ISSUER }) as TokenPayload;
 
 export interface TempTokenPayload {
   userId: string;
@@ -29,10 +31,10 @@ export interface TempTokenPayload {
 }
 
 export const generateTempToken = (userId: string): string =>
-  jwt.sign({ userId, pendingTotp: true }, SECRET, { expiresIn: "5m", issuer: "devflow" });
+  jwt.sign({ userId, pendingTotp: true }, SECRET, { expiresIn: "5m", issuer: ISSUER });
 
 export const verifyTempToken = (token: string): TempTokenPayload =>
-  jwt.verify(token, SECRET, { issuer: "devflow" }) as TempTokenPayload;
+  jwt.verify(token, SECRET, { issuer: ISSUER }) as TempTokenPayload;
 
 export const extractToken = (req: Request): string | null => {
   const header = req.headers.authorization;

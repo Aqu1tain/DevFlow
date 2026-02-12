@@ -24,27 +24,25 @@ const MAX_AWARENESS_UPDATE = 64 * 1024;
 const rooms = new Map<string, Room>();
 const roomCreating = new Map<string, Promise<Room | null>>();
 
-async function getOrCreateRoom(snippetId: string, socket: Socket): Promise<Room | null> {
+async function createRoom(snippetId: string, socket: Socket): Promise<Room | null> {
+  const snippet = await snippetService.findById(snippetId);
+  if (!snippet) return null;
+
   const existing = rooms.get(snippetId);
   if (existing) return existing;
 
-  const inflight = roomCreating.get(snippetId);
-  if (inflight) return inflight;
+  const doc = new Y.Doc();
+  doc.getText("code").insert(0, snippet.code);
+  const room: Room = { doc, hostSocketId: socket.id, mode: "public", users: new Map() };
+  rooms.set(snippetId, room);
+  return room;
+}
 
-  const promise = (async () => {
-    const snippet = await snippetService.findById(snippetId);
-    if (!snippet) return null;
+async function getOrCreateRoom(snippetId: string, socket: Socket): Promise<Room | null> {
+  if (rooms.has(snippetId)) return rooms.get(snippetId)!;
+  if (roomCreating.has(snippetId)) return roomCreating.get(snippetId)!;
 
-    const race = rooms.get(snippetId);
-    if (race) return race;
-
-    const doc = new Y.Doc();
-    doc.getText("code").insert(0, snippet.code);
-    const room: Room = { doc, hostSocketId: socket.id, mode: "public", users: new Map() };
-    rooms.set(snippetId, room);
-    return room;
-  })();
-
+  const promise = createRoom(snippetId, socket);
   roomCreating.set(snippetId, promise);
   promise.finally(() => roomCreating.delete(snippetId));
   return promise;

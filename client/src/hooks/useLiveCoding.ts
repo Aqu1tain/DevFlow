@@ -83,25 +83,23 @@ export function useLiveCoding(snippetId: string | undefined) {
 
     const onModeChanged = (mode: Mode) => setModeState(mode);
 
-    socket.on("connect", onConnect);
-    socket.on("room-state", onRoomState);
-    socket.on("user-joined", onUserJoined);
-    socket.on("user-left", onUserLeft);
-    socket.on("mode-changed", onModeChanged);
-    socket.on("sync-awareness", onSyncAwareness);
+    const events: Array<[string, (...args: unknown[]) => void]> = [
+      ["connect", onConnect],
+      ["room-state", onRoomState],
+      ["user-joined", onUserJoined],
+      ["user-left", onUserLeft],
+      ["mode-changed", onModeChanged],
+      ["sync-awareness", onSyncAwareness],
+    ];
 
+    events.forEach(([e, h]) => socket.on(e, h));
     socket.emit("join-snippet", snippetId, doc.clientID);
 
     const leave = () => socket.emit("leave-snippet");
     window.addEventListener("beforeunload", leave);
 
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("room-state", onRoomState);
-      socket.off("user-joined", onUserJoined);
-      socket.off("user-left", onUserLeft);
-      socket.off("mode-changed", onModeChanged);
-      socket.off("sync-awareness", onSyncAwareness);
+      events.forEach(([e, h]) => socket.off(e, h));
       window.removeEventListener("beforeunload", leave);
       leave();
       providerRef.current?.destroy();

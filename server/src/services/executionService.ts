@@ -4,7 +4,7 @@ const TIMEOUT_MS = 10_000;
 const MAX_CODE_LENGTH = 64 * 1024;
 
 interface PistonResponse {
-  run: { stdout: string; stderr: string; code: number; output: string };
+  run: { stdout: string; stderr: string; code: number; output: string } | null;
 }
 
 function truncate(str: string) {

@@ -10,6 +10,12 @@ import { baseOptions } from "../components/CodeViewer";
 import OutputPanel from "../components/OutputPanel";
 import useExecution, { canRun } from "../hooks/useExecution";
 
+const sanitizeColor = (color: unknown) =>
+  typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#888888";
+
+const sanitizeName = (name: unknown) =>
+  String(name).replace(/["\\]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ").slice(0, 50);
+
 export default function LivePage() {
   const { id } = useParams<{ id: string }>();
   const { snippet, loading, error } = useSnippet(id);
@@ -44,9 +50,8 @@ export default function LivePage() {
       const rules: string[] = [];
       provider.awareness.getStates().forEach((state, clientID) => {
         if (clientID === doc.clientID || !state.user) return;
-        const safeColor = /^#[0-9a-fA-F]{6}$/.test(state.user.color) ? state.user.color : "#888888";
-        const safeName = String(state.user.name).replace(/["\\]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ").slice(0, 50);
-        const { color, name } = { color: safeColor, name: safeName };
+        const color = sanitizeColor(state.user.color);
+        const name = sanitizeName(state.user.name);
         rules.push(`
           .yRemoteSelection-${clientID} {
             background-color: ${color}33;
