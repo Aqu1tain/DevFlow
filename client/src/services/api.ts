@@ -180,6 +180,42 @@ export const executionApi = {
     }),
 };
 
+export type AIAction = "explain" | "correct";
+
+export const aiApi = {
+  stream: async (
+    code: string,
+    language: string,
+    action: AIAction,
+    onChunk: (text: string) => void,
+    signal?: AbortSignal,
+  ) => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/ai`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ code, language, action }),
+      signal,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `Request failed (${res.status})`);
+    }
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      onChunk(decoder.decode(value, { stream: true }));
+    }
+  },
+};
+
 export const authApi = {
   register: (email: string, password: string, username: string) =>
     post<AuthResponse>("/auth/register", { email, password, username }),
