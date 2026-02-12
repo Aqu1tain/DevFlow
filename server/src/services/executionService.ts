@@ -4,7 +4,7 @@ const TIMEOUT_MS = 10_000;
 const MAX_CODE_LENGTH = 64 * 1024;
 
 interface PistonResponse {
-  run: { stdout: string; stderr: string; code: number; output: string };
+  run: { stdout: string; stderr: string; code: number; output: string } | null;
 }
 
 function truncate(str: string) {
@@ -29,6 +29,7 @@ export async function execute(language: string, code: string) {
     if (!res.ok) throw new Error(`Execution engine returned ${res.status}`);
 
     const data = (await res.json()) as PistonResponse;
+    if (!data.run) throw new Error("Execution engine returned no result");
     return {
       stdout: truncate(data.run.stdout),
       stderr: truncate(data.run.stderr),

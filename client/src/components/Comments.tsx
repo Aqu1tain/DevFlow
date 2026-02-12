@@ -25,7 +25,7 @@ interface Props {
   citeRef?: MutableRefObject<((citation: string) => void) | null>;
   comments: Comment[];
   commentsLoading: boolean;
-  addComment: (body: string) => Promise<void>;
+  addComment: (body: string) => Promise<boolean>;
   deleteComment: (commentId: string) => Promise<void>;
   onCiteClick?: (line: number) => void;
   snippetUpdatedAt: string;
@@ -62,12 +62,8 @@ export default function Comments({ visibility, code, citeRef, comments, comments
     e.preventDefault();
     if (!body.trim()) return;
     setSubmitting(true);
-    try {
-      await addComment(body.trim());
-      setBody("");
-    } finally {
-      setSubmitting(false);
-    }
+    if (await addComment(body.trim())) setBody("");
+    setSubmitting(false);
   };
 
   const canDelete = (authorId: string) =>

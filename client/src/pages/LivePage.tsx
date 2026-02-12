@@ -10,6 +10,12 @@ import { baseOptions } from "../components/CodeViewer";
 import OutputPanel from "../components/OutputPanel";
 import useExecution, { canRun } from "../hooks/useExecution";
 
+const sanitizeColor = (color: unknown) =>
+  typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#888888";
+
+const sanitizeName = (name: unknown) =>
+  String(name).replace(/["\\]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ").slice(0, 50);
+
 export default function LivePage() {
   const { id } = useParams<{ id: string }>();
   const { snippet, loading, error } = useSnippet(id);
@@ -44,7 +50,8 @@ export default function LivePage() {
       const rules: string[] = [];
       provider.awareness.getStates().forEach((state, clientID) => {
         if (clientID === doc.clientID || !state.user) return;
-        const { color, name } = state.user;
+        const color = sanitizeColor(state.user.color);
+        const name = sanitizeName(state.user.name);
         rules.push(`
           .yRemoteSelection-${clientID} {
             background-color: ${color}33;
@@ -91,10 +98,13 @@ export default function LivePage() {
   const handleSave = async () => {
     if (!id || !doc) return;
     setSaveStatus("saving");
-    const code = doc.getText("code").toString();
-    await snippetsApi.update(id, { code });
-    setSaveStatus("saved");
-    setTimeout(() => setSaveStatus("idle"), 1500);
+    try {
+      await snippetsApi.update(id, { code: doc.getText("code").toString() });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch {
+      setSaveStatus("idle");
+    }
   };
 
   if (loading) return <p className="text-sm text-gray-500 animate-pulse">Loading...</p>;

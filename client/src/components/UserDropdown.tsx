@@ -30,6 +30,13 @@ export default function UserDropdown({ username, onLogout }: Props) {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-36 bg-[#0f0f17] border border-white/[0.08] shadow-lg z-20">
           <Link
+            to="/profile"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-xs font-mono text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"
+          >
+            profile
+          </Link>
+          <Link
             to="/settings"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-xs font-mono text-gray-400 hover:text-white hover:bg-white/[0.04] transition-colors"

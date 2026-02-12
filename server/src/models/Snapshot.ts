@@ -27,5 +27,6 @@ const snapshotSchema = new Schema<ISnapshot>(
 );
 
 snapshotSchema.index({ snippetId: 1, createdAt: -1 });
+snapshotSchema.index({ userId: 1, createdAt: -1 });
 
 export default model<ISnapshot>("Snapshot", snapshotSchema);
