@@ -131,6 +131,10 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
             onChange={(e) => {
               const v = e.target.value;
               if (v === "private" && !isPro) {
+                if (user?.isGuest) {
+                  window.location.href = "/register";
+                  return;
+                }
                 setShowUpgrade(true);
                 return;
               }
