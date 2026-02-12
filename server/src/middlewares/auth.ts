@@ -67,3 +67,9 @@ export const requireAdmin: Middleware = (req, res, next) => {
   if (req.user?.role !== "admin") return void res.status(403).json({ error: "Admin access required" });
   next();
 };
+
+export const requireAdminTotp: Middleware = (req, res, next) => {
+  if (req.user?.role === "admin" && !req.user.totpEnabled)
+    return void res.status(403).json({ error: "2FA required for admin access" });
+  next();
+};

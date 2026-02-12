@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import type { ReactNode } from "react";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading)
@@ -11,6 +11,9 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated)
     return <Navigate to="/login" state={{ from: location }} replace />;
+
+  if (user?.role === "admin" && !user.totpEnabled && location.pathname !== "/settings/2fa")
+    return <Navigate to="/settings/2fa" replace />;
 
   return children;
 }
