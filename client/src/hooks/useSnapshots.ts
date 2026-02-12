@@ -16,13 +16,14 @@ export default function useSnapshots(snippetId: string | undefined) {
   }, [snippetId]);
 
   const createSnapshot = async (name: string) => {
-    if (!snippetId) return;
+    if (!snippetId) return false;
     try {
       const snapshot = await snapshotsApi.create(snippetId, name);
       setSnapshots((prev) => [snapshot, ...prev]);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create snapshot");
-      throw err;
+      return false;
     }
   };
 
@@ -33,7 +34,6 @@ export default function useSnapshots(snippetId: string | undefined) {
       setSnapshots((prev) => prev.filter((s) => s._id !== snapshotId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete snapshot");
-      throw err;
     }
   };
 
@@ -43,7 +43,6 @@ export default function useSnapshots(snippetId: string | undefined) {
       return await snapshotsApi.restore(snippetId, snapshotId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to restore snapshot");
-      throw err;
     }
   };
 

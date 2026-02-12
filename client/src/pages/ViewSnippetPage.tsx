@@ -45,7 +45,7 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { snippet, setSnippet, loading, error } = useSnippet(id);
-  const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
+  const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
   const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
   const { output, running, duration, run, clear } = useExecution();
   const ai = useAI();
@@ -139,8 +139,8 @@ export default function ViewSnippetPage() {
         </div>
       </div>
 
-      {snapshotsError && (
-        <p className="text-xs text-red-400 mb-4">{snapshotsError}</p>
+      {(snapshotsError || commentsError) && (
+        <p className="text-xs text-red-400 mb-4">{snapshotsError || commentsError}</p>
       )}
 
       {showHistory && (

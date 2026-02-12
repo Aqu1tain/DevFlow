@@ -16,13 +16,14 @@ export default function useComments(snippetId: string | undefined) {
   }, [snippetId]);
 
   const addComment = async (body: string) => {
-    if (!snippetId) return;
+    if (!snippetId) return false;
     try {
       const comment = await commentsApi.create(snippetId, body);
       setComments((prev) => [comment, ...prev]);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post comment");
-      throw err;
+      return false;
     }
   };
 
@@ -33,7 +34,6 @@ export default function useComments(snippetId: string | undefined) {
       setComments((prev) => prev.filter((c) => c._id !== commentId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete comment");
-      throw err;
     }
   };
 

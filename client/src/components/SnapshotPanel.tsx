@@ -8,7 +8,7 @@ interface Props {
   snapshots: Snapshot[];
   currentCode: string;
   currentLanguage: string;
-  onCreate: (name: string) => Promise<void>;
+  onCreate: (name: string) => Promise<boolean>;
   onRestore: (snapshotId: string) => Promise<void>;
   onDelete: (snapshotId: string) => Promise<void>;
 }
@@ -23,18 +23,15 @@ export default function SnapshotPanel({ snapshots, currentCode, currentLanguage,
     e.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
-    try {
-      await onCreate(name.trim());
-      setName("");
-    } finally {
-      setSaving(false);
-    }
+    if (await onCreate(name.trim())) setName("");
+    setSaving(false);
   };
 
   const handleConfirm = async () => {
     if (!confirmAction) return;
-    if (confirmAction.type === "restore") await onRestore(confirmAction.id);
-    else await onDelete(confirmAction.id);
+    const { type, id } = confirmAction;
+    if (type === "restore") await onRestore(id);
+    else await onDelete(id);
     setConfirmAction(null);
   };
 
