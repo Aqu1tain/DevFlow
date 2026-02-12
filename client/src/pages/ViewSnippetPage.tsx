@@ -45,7 +45,7 @@ export default function ViewSnippetPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { snippet, setSnippet, loading, error } = useSnippet(id);
-  const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
+  const { comments, loading: commentsLoading, addComment, deleteComment } = useComments(id);
   const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
   const { output, running, duration, run, clear } = useExecution();
   const ai = useAI();
