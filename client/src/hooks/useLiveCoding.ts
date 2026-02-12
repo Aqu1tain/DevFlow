@@ -41,57 +41,65 @@ export function useLiveCoding(snippetId: string | undefined) {
     const socket = getSocket();
     socketId.current = socket.id ?? null;
 
-    socket.on("connect", () => {
+    const onConnect = () => {
       socketId.current = socket.id ?? null;
-      if (providerRef.current) {
-        socket.emit("join-snippet", snippetId, doc.clientID);
-      }
-    });
+      if (providerRef.current) socket.emit("join-snippet", snippetId, doc.clientID);
+    };
 
-    socket.emit("join-snippet", snippetId, doc.clientID);
+    const onSyncAwareness = () => {
+      if (!providerRef.current) return;
+      const update = encodeAwarenessUpdate(providerRef.current.awareness, [doc.clientID]);
+      socket.emit("awareness-update", Array.from(update));
+    };
 
-    socket.on("room-state", (roomState: RoomState) => {
+    const onRoomState = (roomState: RoomState) => {
       if (!providerRef.current) {
         const provider = new YSocketProvider(doc, socket, roomState.state);
         providerRef.current = provider;
-
         if (user) {
           provider.awareness.setLocalStateField("user", {
             name: user.username,
             color: stringToColor(user.id),
           });
         }
-
-        socket.on("sync-awareness", () => {
-          if (!providerRef.current) return;
-          const update = encodeAwarenessUpdate(providerRef.current.awareness, [doc.clientID]);
-          socket.emit("awareness-update", Array.from(update));
-        });
       } else {
         Y.applyUpdate(doc, new Uint8Array(roomState.state));
       }
-
       setModeState(roomState.mode);
       setUsers(roomState.users);
       setHostSocketId(roomState.hostSocketId);
       setIsSynced(true);
-    });
+    };
 
-    socket.on("user-joined", ({ users }: { users: RoomUser[] }) => setUsers(users));
-    socket.on("user-left", ({ users, hostSocketId, leftClientID }: { users: RoomUser[]; hostSocketId: string; leftClientID?: number }) => {
+    const onUserJoined = ({ users }: { users: RoomUser[] }) => setUsers(users);
+
+    const onUserLeft = ({ users, hostSocketId, leftClientID }: { users: RoomUser[]; hostSocketId: string; leftClientID?: number }) => {
       setUsers(users);
       setHostSocketId(hostSocketId);
       if (leftClientID != null && providerRef.current) {
         removeAwarenessStates(providerRef.current.awareness, [leftClientID], "peer left");
       }
-    });
-    socket.on("mode-changed", (mode: Mode) => setModeState(mode));
+    };
+
+    const onModeChanged = (mode: Mode) => setModeState(mode);
+
+    const events: Array<[string, (...args: any[]) => void]> = [
+      ["connect", onConnect],
+      ["room-state", onRoomState],
+      ["user-joined", onUserJoined],
+      ["user-left", onUserLeft],
+      ["mode-changed", onModeChanged],
+      ["sync-awareness", onSyncAwareness],
+    ];
+
+    events.forEach(([e, h]) => socket.on(e, h));
+    socket.emit("join-snippet", snippetId, doc.clientID);
 
     const leave = () => socket.emit("leave-snippet");
-
     window.addEventListener("beforeunload", leave);
 
     return () => {
+      events.forEach(([e, h]) => socket.off(e, h));
       window.removeEventListener("beforeunload", leave);
       leave();
       providerRef.current?.destroy();

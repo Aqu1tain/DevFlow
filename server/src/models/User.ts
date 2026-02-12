@@ -57,6 +57,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       trim: true,
+      unique: true,
       default: () => `user_${Date.now()}`,
     },
     githubId: { type: String, sparse: true, default: null },
