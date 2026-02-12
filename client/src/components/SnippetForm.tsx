@@ -6,6 +6,7 @@ import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
 import OutputPanel from "./OutputPanel";
+import UpgradeModal from "./UpgradeModal";
 import useExecution, { canRun } from "../hooks/useExecution";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
@@ -35,6 +36,8 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const { output, running, duration, run, clear } = useExecution();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
@@ -86,6 +89,16 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
     }
   };
 
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      const { url } = await billingApi.checkout();
+      window.location.href = url;
+    } catch {
+      setUpgrading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(getData());
@@ -94,6 +107,14 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const transparent = "bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none";
 
   return (
+    <>
+    {showUpgrade && (
+      <UpgradeModal
+        onUpgrade={handleUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        loading={upgrading}
+      />
+    )}
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.06]">
         <div className="flex items-center gap-3 px-3 py-2">
@@ -107,13 +128,10 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           <select
             className="bg-transparent text-xs font-mono text-gray-400 focus:outline-none cursor-pointer"
             value={visibility}
-            onChange={async (e) => {
+            onChange={(e) => {
               const v = e.target.value;
               if (v === "private" && !isPro) {
-                try {
-                  const { url } = await billingApi.checkout();
-                  window.location.href = url;
-                } catch {}
+                setShowUpgrade(true);
                 return;
               }
               setVisibility(v as Visibility);
@@ -187,5 +205,6 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
         </div>
       </div>
     </form>
+    </>
   );
 }

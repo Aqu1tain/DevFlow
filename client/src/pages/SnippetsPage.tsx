@@ -3,8 +3,11 @@ import { Link } from "react-router-dom";
 import { snippetsApi, type Snippet } from "../services/api";
 import { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
+import { useAuth } from "../context/AuthContext";
 
 export default function SnippetsPage() {
+  const { user } = useAuth();
+  const isPro = user?.userType === "pro" || user?.role === "admin";
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
@@ -33,6 +36,14 @@ export default function SnippetsPage() {
 
   return (
     <div>
+      {!isPro && !user?.isGuest && (
+        <div className="flex items-center justify-between mb-6 px-4 py-3 border border-amber-500/20 bg-amber-500/5">
+          <p className="text-xs font-mono text-amber-400/80">keep your code private with Pro</p>
+          <Link to="/settings" className="text-xs font-mono text-amber-400 hover:text-amber-300 transition-colors">
+            upgrade →
+          </Link>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-lg font-mono font-medium">snippets</h1>
         <Link to="/snippets/new" className={buttonClass("accent", "px-3 py-1.5")}>
