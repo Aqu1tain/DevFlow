@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import executionRoutes from "./routes/execution";
 import aiRoutes from "./routes/ai";
+import profileRoutes from "./routes/profile";
 import { socketAuth } from "./socket/auth";
 import { registerLiveSession } from "./socket/liveSession";
 import { connectRedis } from "./lib/redis";
@@ -32,6 +33,7 @@ app.use("/api/snippets", snippetRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/execute", executionRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/profile", profileRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
