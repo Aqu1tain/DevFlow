@@ -165,7 +165,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           value={code}
           onChange={(v) => setCode(v ?? "")}
           onMount={handleMount}
-          options={baseOptions}
+          options={baseOptions()}
         />
       </div>
 

@@ -6,17 +6,26 @@ const PADDING_TOP = 12;
 const PADDING_BOTTOM = 12;
 const PADDING = PADDING_TOP + PADDING_BOTTOM;
 
-const baseOptions = {
-  minimap: { enabled: false },
-  fontSize: 13,
-  lineHeight: LINE_HEIGHT,
-  scrollBeyondLastLine: false,
-  padding: { top: PADDING_TOP, bottom: PADDING_BOTTOM },
-  renderLineHighlight: "none" as const,
-  overviewRulerLanes: 0,
-  hideCursorInOverviewRuler: true,
-  scrollbar: { vertical: "hidden" as const, horizontal: "auto" as const },
-};
+const FONT_SIZE_KEY = "devflow_editor_font_size";
+const DEFAULT_FONT_SIZE = 14;
+
+export function getEditorFontSize() {
+  return parseInt(localStorage.getItem(FONT_SIZE_KEY) || String(DEFAULT_FONT_SIZE));
+}
+
+function baseOptions() {
+  return {
+    minimap: { enabled: false },
+    fontSize: getEditorFontSize(),
+    lineHeight: LINE_HEIGHT,
+    scrollBeyondLastLine: false,
+    padding: { top: PADDING_TOP, bottom: PADDING_BOTTOM },
+    renderLineHighlight: "none" as const,
+    overviewRulerLanes: 0,
+    hideCursorInOverviewRuler: true,
+    scrollbar: { vertical: "hidden" as const, horizontal: "auto" as const },
+  };
+}
 
 export function editorHeight(code: string, minLines = 1) {
   return Math.max(code.split("\n").length, minLines) * LINE_HEIGHT + PADDING;
@@ -129,7 +138,7 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
           language={language}
           theme="vs-dark"
           value={code}
-          options={{ ...baseOptions, readOnly: true, glyphMargin: !!hasComments }}
+          options={{ ...baseOptions(), readOnly: true, glyphMargin: !!hasComments }}
           onMount={handleMount}
         />
       </div>
@@ -174,4 +183,4 @@ export default function CodeViewer({ code, language, onCite, lineComments, edito
   );
 }
 
-export { baseOptions };
+export { baseOptions, FONT_SIZE_KEY };
