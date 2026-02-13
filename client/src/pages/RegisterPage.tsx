@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/Button";
 import AuthLayout, { Divider, GitHubButton, inputClass } from "../components/AuthLayout";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register } = useAuth();
+  const from = (location.state as { from?: string; upgrade?: boolean } | null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +27,7 @@ export default function RegisterPage() {
     setLoading(true);
     const err = await register(email, password, username);
     if (err) { setError(err); setLoading(false); return; }
-    navigate("/snippets");
+    navigate(from?.from ?? "/snippets", { state: { upgrade: from?.upgrade } });
   };
 
   return (

@@ -216,6 +216,12 @@ export const aiApi = {
   },
 };
 
+export const billingApi = {
+  checkout: () => post<{ url: string }>("/billing/checkout"),
+  portal: () => post<{ url: string }>("/billing/portal"),
+  cancel: () => post<{ endsAt: number }>("/billing/cancel"),
+};
+
 export interface ProfileBadge {
   id: string;
   name: string;

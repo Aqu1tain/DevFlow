@@ -35,6 +35,16 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/devflow
       REDIS_URL: redis://redis:6379
       CLIENT_URL: http://localhost
+      SERVER_URL: http://localhost
+
+  stripe:
+    image: stripe/stripe-cli:latest
+    command: listen --forward-to http://server:3001/api/billing/webhook --skip-verify
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_DEVICE_NAME: devflow-docker
+    depends_on:
+      - server
 
   client:
     build: ./client

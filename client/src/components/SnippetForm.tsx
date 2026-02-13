@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { SnippetInput, Visibility } from "../services/api";
 import { baseOptions, editorHeight } from "./CodeViewer";
 import { useAuth } from "../context/AuthContext";
+import { isPro as checkPro } from "../lib/user";
 import Button from "./Button";
 import OutputPanel from "./OutputPanel";
+import UpgradeModal from "./UpgradeModal";
 import useExecution, { canRun } from "../hooks/useExecution";
+import useUpgrade from "../hooks/useUpgrade";
 
 const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "json", "markdown"];
 const MIN_LINES = 12;
@@ -25,7 +29,9 @@ const VISIBILITIES: Visibility[] = ["public", "unlisted", "private"];
 
 export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: Props) {
   const { user } = useAuth();
-  const isPro = user?.userType === "pro" || user?.role === "admin";
+  const isPro = checkPro(user);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [language, setLanguage] = useState(initial?.language ?? "javascript");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -34,6 +40,7 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const [tagsInput, setTagsInput] = useState(initial?.tags?.join(", ") ?? "");
   const { output, running, duration, run, clear } = useExecution();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const upgrade = useUpgrade((location.state as { upgrade?: boolean })?.upgrade ?? false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const getData = useCallback(
@@ -93,6 +100,15 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
   const transparent = "bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none";
 
   return (
+    <>
+    {upgrade.open && (
+      <UpgradeModal
+        onUpgrade={upgrade.checkout}
+        onClose={() => upgrade.setOpen(false)}
+        loading={upgrade.loading}
+        error={upgrade.error}
+      />
+    )}
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.06]">
         <div className="flex items-center gap-3 px-3 py-2">
@@ -106,10 +122,19 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
           <select
             className="bg-transparent text-xs font-mono text-gray-400 focus:outline-none cursor-pointer"
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value as Visibility)}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "private" && !isPro) {
+                if (user?.isGuest) return navigate("/register", { state: { from: location.pathname, upgrade: true } });
+                return upgrade.setOpen(true);
+              }
+              setVisibility(v as Visibility);
+            }}
           >
-            {VISIBILITIES.filter((v) => v !== "private" || isPro).map((v) => (
-              <option key={v} value={v}>{v}</option>
+            {VISIBILITIES.map((v) => (
+              <option key={v} value={v}>
+                {v === "private" && !isPro ? "private (pro)" : v}
+              </option>
             ))}
           </select>
           <select
@@ -174,5 +199,6 @@ export default function SnippetForm({ initial, onSubmit, onSave, submitLabel }: 
         </div>
       </div>
     </form>
+    </>
   );
 }
