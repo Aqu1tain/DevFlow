@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import type { Request, Response } from "express";
 import User from "../models/User";
 import type { IUser } from "../models/User";
+import { delCache } from "../lib/redis";
 
 let _stripe: Stripe | null = null;
 
@@ -91,20 +92,15 @@ const resolveCustomer = async (stripe: Stripe, customerId: string): Promise<Stri
   return customer as Stripe.Customer;
 };
 
-const upgradeUser = async (customerId: string, stripe: Stripe) => {
-  const customer = await resolveCustomer(stripe, customerId);
-  if (!customer?.metadata?.userId) {
-    console.error(`[billing] Missing userId metadata for customer ${customerId}`);
-    return;
-  }
-  if (!mongoose.isValidObjectId(customer.metadata.userId)) {
-    console.error(`[billing] Invalid userId in metadata for customer ${customerId}`);
-    return;
-  }
-  await User.findByIdAndUpdate(customer.metadata.userId, { userType: "pro" });
+const invalidateProfileCache = async (username: string) => {
+  const year = new Date().getFullYear();
+  await Promise.all([
+    delCache(`profile:${username}:${year}`),
+    delCache(`profile:${username}:${year - 1}`),
+  ]);
 };
 
-const downgradeUser = async (customerId: string, stripe: Stripe) => {
+const setUserType = async (customerId: string, stripe: Stripe, userType: "pro" | "free") => {
   const customer = await resolveCustomer(stripe, customerId);
   if (!customer?.metadata?.userId) {
     console.error(`[billing] Missing userId metadata for customer ${customerId}`);
@@ -114,7 +110,8 @@ const downgradeUser = async (customerId: string, stripe: Stripe) => {
     console.error(`[billing] Invalid userId in metadata for customer ${customerId}`);
     return;
   }
-  await User.findByIdAndUpdate(customer.metadata.userId, { userType: "free" });
+  const user = await User.findByIdAndUpdate(customer.metadata.userId, { userType }, { new: true });
+  if (user) await invalidateProfileCache(user.username);
 };
 
 export const handleWebhook = async (req: Request, res: Response) => {
@@ -132,13 +129,13 @@ export const handleWebhook = async (req: Request, res: Response) => {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      await upgradeUser(session.customer as string, stripe);
+      await setUserType(session.customer as string, stripe, "pro");
     }
 
     if (event.type === "customer.subscription.deleted" || event.type === "invoice.payment_failed") {
       const obj = event.data.object as Stripe.Subscription | Stripe.Invoice;
       const customerId = typeof obj.customer === "string" ? obj.customer : obj.customer?.id;
-      if (customerId) await downgradeUser(customerId, stripe);
+      if (customerId) await setUserType(customerId, stripe, "free");
     }
   } catch (err) {
     console.error(`[billing] Webhook handler error for ${event.type}:`, err);
