@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { billingApi } from "../services/api";
-import { isStripeUrl } from "../lib/user";
+import { stripeRedirect } from "../lib/user";
 
 export default function useUpgrade(initialOpen = false) {
   const [open, setOpen] = useState(initialOpen);
@@ -11,9 +11,7 @@ export default function useUpgrade(initialOpen = false) {
     setError("");
     setLoading(true);
     try {
-      const { url } = await billingApi.checkout();
-      if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
-      window.location.href = url;
+      await stripeRedirect(billingApi.checkout);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);

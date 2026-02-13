@@ -19,7 +19,7 @@ function TotpSection() {
   const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
   const [success, setSuccess] = useState("");
-  const { loading, error, run } = useAction();
+  const { loading, error, setError, run } = useAction();
 
   const totpEnabled = user!.totpEnabled;
 
