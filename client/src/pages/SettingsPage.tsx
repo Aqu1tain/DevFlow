@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { authApi, billingApi, profileApi } from "../services/api";
-import { isPro as checkPro, stripeRedirect } from "../lib/user";
+import { stripeRedirect } from "../lib/user";
 import useAction from "../hooks/useAction";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
@@ -141,7 +141,7 @@ function TotpSection() {
 
 function BillingSection() {
   const { user, refreshUser } = useAuth();
-  const isPro = checkPro(user);
+  const isPro = user?.userType === "pro";
   const { loading, error, run } = useAction();
   const [confirming, setConfirming] = useState(false);
   const [endsAt, setEndsAt] = useState<string>("");

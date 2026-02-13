@@ -6,7 +6,7 @@ import { visibilityStyle } from "../lib/visibility";
 import Button from "../components/Button";
 
 function SnippetRow({ snippet, onDelete }: { snippet: AdminSnippet; onDelete: (id: string) => void }) {
-  const vis = visibilityStyle[snippet.visibility];
+  const vis = visibilityStyle(snippet.visibility);
   return (
     <div className="flex items-center justify-between px-4 py-3.5 -mx-4 hover:bg-white/[0.03] transition-colors group">
       <div className="min-w-0 flex-1">
