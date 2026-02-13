@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 interface Props {
   username: string;
   userType: string;
+  role: string;
   onLogout: () => void;
 }
 
-export default function UserDropdown({ username, userType, onLogout }: Props) {
+export default function UserDropdown({ username, userType, role, onLogout }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,9 +27,11 @@ export default function UserDropdown({ username, userType, onLogout }: Props) {
         className="flex items-center gap-1.5 cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
       >
         {username}
-        {userType === "pro" && (
+        {role === "admin" ? (
+          <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-1 py-0.5">admin</span>
+        ) : userType === "pro" ? (
           <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.5">pro</span>
-        )}
+        ) : null}
       </button>
 
       {open && (

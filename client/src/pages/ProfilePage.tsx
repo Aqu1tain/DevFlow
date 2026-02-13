@@ -145,12 +145,14 @@ export default function ProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-mono font-medium">{data.user.username}</h1>
-            <span className={`text-[10px] font-mono px-1.5 py-0.5 ${
-              data.user.userType === "pro"
-                ? "text-emerald-400 border border-emerald-500/30 bg-emerald-500/10"
-                : "text-gray-600 border border-white/[0.06]"
+            <span className={`text-[10px] font-mono px-1.5 py-0.5 border ${
+              data.user.role === "admin"
+                ? "text-rose-400 border-rose-500/30 bg-rose-500/10"
+                : data.user.userType === "pro"
+                ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                : "text-gray-600 border-white/[0.06]"
             }`}>
-              {data.user.userType}
+              {data.user.role === "admin" ? "admin" : data.user.userType}
             </span>
           </div>
           <p className="text-xs font-mono text-gray-600 mt-0.5">
