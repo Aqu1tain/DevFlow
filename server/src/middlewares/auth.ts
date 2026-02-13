@@ -57,7 +57,7 @@ export const requireRegistered: Middleware = (req, res, next) => {
 
 export const requirePro: Middleware = (req, res, next) => {
   if (req.isGuest) return void res.status(403).json({ error: "Registered account required" });
-  if (req.user?.userType !== "pro") return void res.status(403).json({ error: "Pro subscription required" });
+  if (req.user?.userType !== "pro" && req.user?.role !== "admin") return void res.status(403).json({ error: "Pro subscription required" });
   next();
 };
 
