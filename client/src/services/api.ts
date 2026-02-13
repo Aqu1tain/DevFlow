@@ -231,7 +231,7 @@ export interface ProfileBadge {
 }
 
 export interface ProfileData {
-  user: { username: string; userType: string; createdAt: string };
+  user: { username: string; userType: string; role: string; createdAt: string };
   stats: { snippets: number; comments: number; snapshots: number; languages: string[] };
   heatmap: Record<string, number>;
   badges: ProfileBadge[];
