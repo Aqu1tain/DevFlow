@@ -164,7 +164,7 @@ export default function LivePage() {
             language={snippet.language}
             theme="vs-dark"
             onMount={handleMount}
-            options={{ ...baseOptions, readOnly, scrollbar: { vertical: "auto", horizontal: "auto" } }}
+            options={{ ...baseOptions(), readOnly, scrollbar: { vertical: "auto", horizontal: "auto" } }}
           />
         </div>
       )}
