@@ -27,7 +27,7 @@ export default function UserDropdown({ username, userType, onLogout }: Props) {
       >
         {username}
         {userType === "pro" && (
-          <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-1 py-0.5">pro</span>
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.5">pro</span>
         )}
       </button>
 
