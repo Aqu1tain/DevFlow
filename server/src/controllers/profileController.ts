@@ -26,7 +26,7 @@ export const getProfile = handle<{ username: string }>(async (req, res) => {
   ]);
 
   const payload = {
-    user: { username: user.username, userType: user.userType, createdAt: user.createdAt },
+    user: { username: user.username, userType: user.userType, role: user.role, createdAt: user.createdAt },
     stats,
     heatmap,
     badges,
