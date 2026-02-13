@@ -3,14 +3,28 @@ import { Link } from "react-router-dom";
 import { snippetsApi, type Snippet } from "../services/api";
 import { buttonClass } from "../components/Button";
 import { visibilityStyle } from "../lib/visibility";
+import { useAuth } from "../context/AuthContext";
+import { isPro as checkPro } from "../lib/user";
+
+const BANNER_KEY = "pro_banner_dismissed";
 
 export default function SnippetsPage() {
+  const { user } = useAuth();
+  const isPro = checkPro(user);
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    localStorage.getItem(BANNER_KEY) === "true"
+  );
+
+  const dismissBanner = () => {
+    localStorage.setItem(BANNER_KEY, "true");
+    setBannerDismissed(true);
+  };
 
   const loadPage = (p: number) => {
     setLoading(true);
@@ -33,6 +47,19 @@ export default function SnippetsPage() {
 
   return (
     <div>
+      {!isPro && !user?.isGuest && !bannerDismissed && (
+        <div className="flex items-center justify-between mb-6 px-4 py-3 border border-emerald-500/20 bg-emerald-500/5">
+          <p className="text-xs font-mono text-gray-400">keep your code private with Pro</p>
+          <div className="flex items-center gap-4">
+            <Link to="/settings" className="text-xs font-mono text-emerald-400 hover:text-emerald-300 transition-colors">
+              upgrade
+            </Link>
+            <button onClick={dismissBanner} className="text-xs font-mono text-gray-600 hover:text-gray-400 transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-lg font-mono font-medium">snippets</h1>
         <Link to="/snippets/new" className={buttonClass("accent", "px-3 py-1.5")}>

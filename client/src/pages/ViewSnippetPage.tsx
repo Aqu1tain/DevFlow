@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { snippetsApi, type Comment } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import useSnippet from "../hooks/useSnippet";
@@ -14,6 +14,9 @@ import useExecution, { canRun } from "../hooks/useExecution";
 import OutputPanel from "../components/OutputPanel";
 import useAI from "../hooks/useAI";
 import AIPanel from "../components/AIPanel";
+import UpgradeModal from "../components/UpgradeModal";
+import useUpgrade from "../hooks/useUpgrade";
+import { isPro as checkPro } from "../lib/user";
 import { visibilityStyle } from "../lib/visibility";
 
 function buildLineComments(comments: Comment[], totalLines: number) {
@@ -43,7 +46,10 @@ function flashElement(el: HTMLElement) {
 export default function ViewSnippetPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const isPro = checkPro(user);
+  const upgrade = useUpgrade();
   const { snippet, setSnippet, loading, error } = useSnippet(id);
   const { comments, loading: commentsLoading, error: commentsError, addComment, deleteComment } = useComments(id);
   const { snapshots, error: snapshotsError, createSnapshot, deleteSnapshot, restoreSnapshot } = useSnapshots(id);
@@ -89,7 +95,23 @@ export default function ViewSnippetPage() {
     navigate("/snippets");
   };
 
+  const handleAI = (action: "explain" | "correct") => {
+    if (user?.isGuest) return navigate("/register", { state: { from: location.pathname, upgrade: true } });
+    if (!isPro) return upgrade.setOpen(true);
+    ai.ask(snippet!.code, snippet!.language, action);
+  };
+
   return (
+    <>
+    {upgrade.open && (
+      <UpgradeModal
+        onUpgrade={upgrade.checkout}
+        onClose={() => upgrade.setOpen(false)}
+        loading={upgrade.loading}
+        error={upgrade.error}
+        reason="ai"
+      />
+    )}
     <div>
       <div className="mb-6">
         <div className="flex items-start justify-between">
@@ -175,26 +197,22 @@ export default function ViewSnippetPage() {
               {running ? "Running..." : "Run"}
             </Button>
           )}
-          {user.userType === "pro" && (
-            <>
-              <Button
-                variant="ghost"
-                className="px-3 py-1.5"
-                onClick={() => ai.ask(snippet.code, snippet.language, "explain")}
-                disabled={ai.loading}
-              >
-                Explain
-              </Button>
-              <Button
-                variant="ghost"
-                className="px-3 py-1.5"
-                onClick={() => ai.ask(snippet.code, snippet.language, "correct")}
-                disabled={ai.loading}
-              >
-                Correct
-              </Button>
-            </>
-          )}
+          <Button
+            variant="ghost"
+            className={`px-3 py-1.5 ${isPro ? "" : "opacity-50"}`}
+            onClick={() => handleAI("explain")}
+            disabled={ai.loading}
+          >
+            {isPro ? "Explain" : "Explain (pro)"}
+          </Button>
+          <Button
+            variant="ghost"
+            className={`px-3 py-1.5 ${isPro ? "" : "opacity-50"}`}
+            onClick={() => handleAI("correct")}
+            disabled={ai.loading}
+          >
+            {isPro ? "Correct" : "Correct (pro)"}
+          </Button>
         </div>
       )}
 
@@ -222,5 +240,6 @@ export default function ViewSnippetPage() {
         snippetUpdatedAt={snippet.updatedAt}
       />
     </div>
+    </>
   );
 }

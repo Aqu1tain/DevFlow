@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 
 interface Props {
   username: string;
+  userType: string;
   onLogout: () => void;
 }
 
-export default function UserDropdown({ username, onLogout }: Props) {
+export default function UserDropdown({ username, userType, onLogout }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -22,9 +23,12 @@ export default function UserDropdown({ username, onLogout }: Props) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
+        className="flex items-center gap-1.5 cursor-pointer text-xs font-mono text-gray-500 hover:text-gray-300 transition-colors"
       >
         {username}
+        {userType === "pro" && (
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1 py-0.5">pro</span>
+        )}
       </button>
 
       {open && (

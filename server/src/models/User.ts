@@ -16,6 +16,7 @@ export interface IUser extends Document {
   role: Role;
   totpSecret?: string;
   totpEnabled: boolean;
+  stripeCustomerId?: string;
   lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -67,6 +68,7 @@ const userSchema = new Schema<IUser>(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     totpSecret: { type: String, select: false },
     totpEnabled: { type: Boolean, default: false },
+    stripeCustomerId: { type: String, default: null, index: true, sparse: true },
     lastLoginAt: { type: Date, default: Date.now },
   },
   { timestamps: true },
