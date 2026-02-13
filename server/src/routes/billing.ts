@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { authenticate, requireRegistered } from "../middlewares/auth";
-import { createCheckout, createPortal } from "../controllers/billingController";
+import { cancelSubscription, createCheckout, createPortal } from "../controllers/billingController";
 
 const limiter = rateLimit({
   windowMs: 60_000,
@@ -15,5 +15,6 @@ const router = Router();
 
 router.post("/checkout", authenticate, requireRegistered, limiter, createCheckout);
 router.post("/portal", authenticate, requireRegistered, limiter, createPortal);
+router.post("/cancel", authenticate, requireRegistered, limiter, cancelSubscription);
 
 export default router;

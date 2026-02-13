@@ -3,7 +3,8 @@ import { Navigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { authApi, billingApi, profileApi } from "../services/api";
-import { isPro as checkPro, isStripeUrl } from "../lib/user";
+import { isPro as checkPro, stripeRedirect } from "../lib/user";
+import useAction from "../hooks/useAction";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
 
@@ -17,23 +18,10 @@ function TotpSection() {
   const [secret, setSecret] = useState("");
   const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { loading, error, run } = useAction();
 
   const totpEnabled = user!.totpEnabled;
-
-  const run = async (fn: () => Promise<void>) => {
-    setError("");
-    setLoading(true);
-    try {
-      await fn();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const startSetup = () => run(async () => {
     const res = await authApi.setupTotp();
@@ -154,31 +142,20 @@ function TotpSection() {
 function BillingSection() {
   const { user, refreshUser } = useAuth();
   const isPro = checkPro(user);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { loading, error, run } = useAction();
+  const [confirming, setConfirming] = useState(false);
+  const [endsAt, setEndsAt] = useState<string>("");
 
-  const run = async (fn: () => Promise<void>) => {
-    setError("");
-    setLoading(true);
-    try {
-      await fn();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const upgrade = () => run(() => stripeRedirect(billingApi.checkout));
+  const manage = () => run(() => stripeRedirect(billingApi.portal));
 
-  const upgrade = () => run(async () => {
-    const { url } = await billingApi.checkout();
-    if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
-    window.location.href = url;
-  });
-
-  const manage = () => run(async () => {
-    const { url } = await billingApi.portal();
-    if (!isStripeUrl(url)) throw new Error("Invalid redirect URL");
-    window.location.href = url;
+  const cancel = () => run(async () => {
+    const { endsAt: ts } = await billingApi.cancel();
+    const date = new Date(ts * 1000).toLocaleDateString("en-US", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+    setEndsAt(date);
+    setConfirming(false);
   });
 
   useEffect(() => {
@@ -198,10 +175,35 @@ function BillingSection() {
         <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 font-mono">{error}</p>
       )}
 
+      {endsAt && (
+        <p className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 font-mono">
+          subscription cancelled — Pro access until {endsAt}
+        </p>
+      )}
+
       {isPro ? (
-        <Button onClick={manage} disabled={loading} variant="ghost" className="px-4 py-2.5">
-          {loading ? "loading..." : "manage subscription"}
-        </Button>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <Button onClick={manage} disabled={loading} variant="ghost" className="px-4 py-2.5">
+              {loading && !confirming ? "loading..." : "manage subscription"}
+            </Button>
+            {!confirming ? (
+              <Button onClick={() => setConfirming(true)} disabled={loading} variant="danger" className="px-4 py-2.5">
+                cancel subscription
+              </Button>
+            ) : (
+              <div className="flex gap-3 items-center">
+                <span className="text-xs font-mono text-gray-400">are you sure?</span>
+                <Button onClick={cancel} disabled={loading} variant="danger" className="px-4 py-2.5">
+                  {loading ? "cancelling..." : "confirm"}
+                </Button>
+                <Button onClick={() => setConfirming(false)} disabled={loading} variant="ghost" className="px-4 py-2.5">
+                  dismiss
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="space-y-3">
           <p className="text-xs font-mono text-gray-500">upgrade to Pro to unlock private snippets</p>

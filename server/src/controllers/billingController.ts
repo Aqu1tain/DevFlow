@@ -86,6 +86,26 @@ export const createPortal = handle(async (req, res) => {
   res.json({ url: session.url });
 });
 
+export const cancelSubscription = handle(async (req, res) => {
+  const user = req.user!;
+  if (!user.stripeCustomerId) throw fail("No billing account", 404);
+
+  const stripe = getStripe();
+  const { data } = await stripe.subscriptions.list({
+    customer: user.stripeCustomerId,
+    status: "active",
+    limit: 1,
+  });
+
+  if (data.length === 0) throw fail("No active subscription");
+
+  const sub = await stripe.subscriptions.update(data[0].id, {
+    cancel_at_period_end: true,
+  });
+
+  res.json({ endsAt: sub.current_period_end });
+});
+
 const resolveCustomer = async (stripe: Stripe, customerId: string): Promise<Stripe.Customer | null> => {
   const customer = await stripe.customers.retrieve(customerId);
   if (customer.deleted) return null;
