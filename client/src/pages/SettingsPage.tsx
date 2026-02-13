@@ -7,8 +7,7 @@ import { stripeRedirect } from "../lib/user";
 import useAction from "../hooks/useAction";
 import Button from "../components/Button";
 import { inputClass } from "../components/AuthLayout";
-
-const FONT_SIZE_KEY = "devflow_editor_font_size";
+import { FONT_SIZE_KEY } from "../components/CodeViewer";
 
 type TotpStep = "idle" | "setup";
 

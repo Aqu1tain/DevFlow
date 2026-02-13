@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DiffEditor } from "@monaco-editor/react";
 import type { Snapshot } from "../services/api";
 import { timeAgo } from "../lib/timeAgo";
+import { getEditorFontSize } from "./CodeViewer";
 import Button from "./Button";
 
 interface Props {
@@ -85,7 +86,7 @@ export default function SnapshotPanel({ snapshots, currentCode, currentLanguage,
                       options={{
                         readOnly: true,
                         minimap: { enabled: false },
-                        fontSize: 13,
+                        fontSize: getEditorFontSize(),
                         lineHeight: 20,
                         scrollBeyondLastLine: false,
                         renderSideBySide: false,
